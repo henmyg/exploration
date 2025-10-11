@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Maui.ViewModels;
 
 namespace Maui
 {
@@ -14,6 +15,13 @@ namespace Maui
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
+
+            // Register ViewModels
+            builder.Services.AddSingleton<MainPageViewModel>();
+
+            // Register Views
+            builder.Services.AddSingleton<AppShell>();
+            builder.Services.AddSingleton<MainPage>();
 
 #if DEBUG
     		builder.Logging.AddDebug();
