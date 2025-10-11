@@ -6,11 +6,6 @@ namespace Maui.Tests.Infrastructure.Api
 {
     public class DayAheadPriceModelTests
     {
-        private readonly JsonSerializerOptions _jsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = false
-        };
-
         public record SerializeInput(
             string Area,
             string Eur,
@@ -59,7 +54,7 @@ namespace Maui.Tests.Infrastructure.Api
             """;
 
             // Act
-            var record = JsonSerializer.Deserialize<DayAheadPriceRecord>(json, _jsonOptions);
+            var record = JsonSerializer.Deserialize<DayAheadPriceRecord>(json);
 
             // Assert
             Assert.NotNull(record);
@@ -85,7 +80,7 @@ namespace Maui.Tests.Infrastructure.Api
             """;
 
             // Act
-            var record = JsonSerializer.Deserialize<DayAheadPriceRecord>(json, _jsonOptions);
+            var record = JsonSerializer.Deserialize<DayAheadPriceRecord>(json);
 
             // Assert
             Assert.NotNull(record);
@@ -120,7 +115,7 @@ namespace Maui.Tests.Infrastructure.Api
             """;
 
             // Act
-            var response = JsonSerializer.Deserialize<DayAheadPricesResponse>(json, _jsonOptions);
+            var response = JsonSerializer.Deserialize<DayAheadPricesResponse>(json);
 
             // Assert
             Assert.NotNull(response);
@@ -144,12 +139,37 @@ namespace Maui.Tests.Infrastructure.Api
             };
 
             // Act
-            var json = JsonSerializer.Serialize(record, _jsonOptions);
+            var json = JsonSerializer.Serialize(record);
 
             // Assert
             Assert.Contains("\"TimeUTC\"", json);
             Assert.Contains("\"PriceArea\":\"DK1\"", json);
             Assert.Contains("50.10", json);
+        }
+
+        [Fact]
+        public void CanDeserialize_RealWorldExample()
+        {
+            // Arrange
+            var json = File.ReadAllText("Infrastructure/Api/DayAheadPricesExample.json");
+
+            // Act
+            var response = JsonSerializer.Deserialize<DayAheadPricesResponse>(json);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.Equal(576, response.Records.Count);
+            Assert.All(response.Records, record =>
+            {
+                Assert.NotNull(record.PriceArea);
+                Assert.NotEqual(default, record.TimeUTC);
+                Assert.NotEqual(default, record.TimeDK);
+            });
+
+            var record7 = response.Records[6];
+            Assert.Equal("DE", record7.PriceArea);
+            Assert.Equal(93.18m, record7.DayAheadPriceEUR);
+            Assert.Equal(695.793696m, record7.DayAheadPriceDKK);
         }
     }
 }

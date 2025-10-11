@@ -25,4 +25,10 @@
     <ProjectReference Include="..\Maui.Infrastructure\Maui.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Infrastructure\Api\DayAheadPricesExample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
