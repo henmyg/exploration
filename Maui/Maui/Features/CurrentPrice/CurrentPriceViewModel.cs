@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Maui.Infrastructure.Api;
+using Maui.Shared;
 
 namespace Maui.Features.CurrentPrice;
 
@@ -32,14 +33,22 @@ public partial class CurrentPriceViewModel : ObservableObject
         try
         {
             var now = DateTime.UtcNow;
-            var hourStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
-            var hourEnd = hourStart.AddHours(1);
+            var dayStart = now.Date;
+            var dayEnd = dayStart.AddDays(1);
 
-            var response = await _httpClient.GetDayAheadPricesAsync("DK1", hourStart, hourEnd);
+            var response = await _httpClient.GetDayAheadPricesAsync("DK1", dayStart, dayEnd);
 
-            if (response?.Records.Count > 0)
+            if (response?.Records != null)
             {
-                CurrentPriceDKK = response.Records[0].DayAheadPriceDKK;
+                var currentPrice = PriceHelper.GetCurrentPrice(response.Records);
+                if (currentPrice != null)
+                {
+                    CurrentPriceDKK = currentPrice.DayAheadPriceDKK;
+                }
+                else
+                {
+                    ErrorMessage = "No current price available";
+                }
             }
             else
             {

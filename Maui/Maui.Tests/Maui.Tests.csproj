@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Maui.Infrastructure\Maui.Infrastructure.csproj" />
+    <ProjectReference Include="..\Maui\Maui.csproj" />
   </ItemGroup>
 
   <ItemGroup>
