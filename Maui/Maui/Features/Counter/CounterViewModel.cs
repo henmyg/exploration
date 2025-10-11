@@ -1,9 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-namespace Maui.ViewModels
+namespace Maui.Features.Counter
 {
-    public partial class MainPageViewModel : ObservableObject
+    public partial class CounterViewModel : ObservableObject
     {
         [ObservableProperty]
         private int count = 0;

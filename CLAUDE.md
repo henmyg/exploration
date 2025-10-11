@@ -45,48 +45,59 @@ dotnet clean Maui/Maui.sln
 
 ## Architecture
 
-### MVVM Pattern
+### Vertical Slice Architecture
 
-This project uses the **Model-View-ViewModel (MVVM)** pattern with dependency injection:
+This project uses **Vertical Slice Architecture** where features are organized by business capability rather than technical layer. Each feature contains all the code needed for that functionality in a single folder.
 
-1. **ViewModels/** - Contains all ViewModels
-   - ViewModels inherit from `ObservableObject` (CommunityToolkit.Mvvm)
-   - Use `[ObservableProperty]` attribute for bindable properties (source generator creates the property automatically)
-   - Use `[RelayCommand]` attribute for commands (source generator creates `{MethodName}Command` property)
-   - ViewModels are registered in DI container as singletons or transients
+**Features/** - Each feature is self-contained in its own folder:
+- `Features/Counter/` - Counter feature example
+  - `CounterPage.xaml` - UI definition
+  - `CounterPage.xaml.cs` - Minimal code-behind (sets BindingContext)
+  - `CounterViewModel.cs` - Business logic and state management
 
-2. **Views (Pages)** - XAML pages with minimal code-behind
-   - Code-behind only sets `BindingContext` via constructor injection
-   - XAML bindings connect to ViewModel properties and commands
-   - Views are registered in DI container and injected with their ViewModels
+**Benefits of Vertical Slices:**
+- Related code stays together (high cohesion)
+- Easy to find everything for a feature
+- Features can be added/removed independently
+- Clear boundaries between features
+- Reduces coupling between unrelated features
+
+### MVVM Pattern Within Features
+
+Each feature uses **MVVM (Model-View-ViewModel)** pattern with CommunityToolkit.Mvvm:
+
+1. **ViewModel** - Business logic and state
+   - Inherits from `ObservableObject` (CommunityToolkit.Mvvm)
+   - Use `[ObservableProperty]` for bindable properties (source generator creates public property)
+   - Use `[RelayCommand]` for commands (source generator creates `{MethodName}Command` property)
+   - Registered in DI container as singleton or transient
+
+2. **Page (View)** - UI presentation
+   - XAML defines UI with data bindings to ViewModel
+   - Code-behind only receives ViewModel via constructor and sets `BindingContext`
+   - Registered in DI container
 
 3. **Dependency Injection** - Configured in `MauiProgram.cs`
-   - ViewModels registered via `builder.Services.AddSingleton<T>()` or `AddTransient<T>()`
-   - Views registered similarly and receive ViewModels through constructor injection
-   - Shell and App also use constructor injection for their dependencies
+   - Each feature's ViewModel and Page registered together
+   - Shell and App also use constructor injection
 
 ### Application Entry Points
 
 1. **MauiProgram.cs** - Application bootstrapping
    - Configures the MAUI app builder
    - Registers fonts (OpenSans-Regular, OpenSans-Semibold)
-   - **Registers all ViewModels and Views in DI container**
+   - **Registers all features (ViewModels and Pages) in DI container**
    - Adds debug logging in DEBUG builds
    - Entry point: `MauiProgram.CreateMauiApp()`
 
 2. **App.xaml.cs** - Application lifecycle
    - Receives `AppShell` via constructor injection
-   - Sets `MainPage` to the injected AppShell
+   - Overrides `CreateWindow` to return window with injected AppShell
 
 3. **AppShell.xaml** - Shell-based navigation container
    - Manages app navigation structure via routes
-   - Uses `ContentTemplate="{DataTemplate local:PageName}"` for DI-compatible page creation
-   - Currently contains MainPage route
-
-4. **Views** - Content pages following MVVM
-   - XAML defines UI with data bindings to ViewModel
-   - Code-behind receives ViewModel via constructor and sets as `BindingContext`
-   - Example: MainPage.xaml + MainPage.xaml.cs + MainPageViewModel
+   - Uses `ContentTemplate="{DataTemplate featureName:PageName}"` for DI-compatible page creation
+   - Currently contains CounterPage route
 
 ### Platform-Specific Code
 
@@ -129,41 +140,73 @@ Each platform has its own entry points that eventually call `MauiProgram.CreateM
 - MAUI uses single-project structure (SingleProject=true) for managing all platforms
 - For Windows development, use the "Windows Machine" launch profile defined in Properties/launchSettings.json
 
-### Adding New Pages with MVVM
+### Adding New Features
 
-When creating a new page, follow this pattern:
+When creating a new feature, follow the vertical slice pattern:
 
-1. Create ViewModel in `ViewModels/` folder:
+1. Create feature folder in `Features/`:
+   ```
+   Features/
+     MyFeature/
+       MyFeaturePage.xaml
+       MyFeaturePage.xaml.cs
+       MyFeatureViewModel.cs
+   ```
+
+2. Create ViewModel with business logic:
    ```csharp
-   public partial class MyPageViewModel : ObservableObject
+   namespace Maui.Features.MyFeature
    {
-       [ObservableProperty]
-       private string myProperty;
+       public partial class MyFeatureViewModel : ObservableObject
+       {
+           [ObservableProperty]
+           private string myProperty;
 
-       [RelayCommand]
-       private void MyAction() { /* logic */ }
+           [RelayCommand]
+           private void MyAction() { /* logic */ }
+       }
    }
    ```
 
-2. Register in `MauiProgram.cs`:
-   ```csharp
-   builder.Services.AddSingleton<MyPageViewModel>();
-   builder.Services.AddSingleton<MyPage>();
-   ```
-
-3. Create View with XAML bindings:
+3. Create Page XAML with bindings:
    ```xml
-   <ContentPage x:DataType="viewModels:MyPageViewModel">
+   <ContentPage xmlns:myFeature="clr-namespace:Maui.Features.MyFeature"
+                x:Class="Maui.Features.MyFeature.MyFeaturePage"
+                x:DataType="myFeature:MyFeatureViewModel">
        <Button Text="{Binding MyProperty}"
                Command="{Binding MyActionCommand}" />
    </ContentPage>
    ```
 
-4. Inject ViewModel in code-behind:
+4. Create Page code-behind with ViewModel injection:
    ```csharp
-   public MyPage(MyPageViewModel viewModel)
+   namespace Maui.Features.MyFeature
    {
-       InitializeComponent();
-       BindingContext = viewModel;
+       public partial class MyFeaturePage : ContentPage
+       {
+           public MyFeaturePage(MyFeatureViewModel viewModel)
+           {
+               InitializeComponent();
+               BindingContext = viewModel;
+           }
+       }
    }
+   ```
+
+5. Register in `MauiProgram.cs`:
+   ```csharp
+   using Maui.Features.MyFeature;
+
+   // In CreateMauiApp():
+   builder.Services.AddSingleton<MyFeatureViewModel>();
+   builder.Services.AddSingleton<MyFeaturePage>();
+   ```
+
+6. Add route in `AppShell.xaml`:
+   ```xml
+   <Shell xmlns:myFeature="clr-namespace:Maui.Features.MyFeature">
+       <ShellContent Title="My Feature"
+                     ContentTemplate="{DataTemplate myFeature:MyFeaturePage}"
+                     Route="MyFeaturePage" />
+   </Shell>
    ```

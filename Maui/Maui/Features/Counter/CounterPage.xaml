@@ -1,9 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewModels="clr-namespace:Maui.ViewModels"
-             x:Class="Maui.MainPage"
-             x:DataType="viewModels:MainPageViewModel">
+             xmlns:counter="clr-namespace:Maui.Features.Counter"
+             x:Class="Maui.Features.Counter.CounterPage"
+             x:DataType="counter:CounterViewModel">
 
     <ScrollView>
         <VerticalStackLayout
