@@ -4,11 +4,21 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:counter="clr-namespace:Maui.Features.Counter"
+    xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
     Title="Maui">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate counter:CounterPage}"
-        Route="CounterPage" />
+    <TabBar>
+        <ShellContent
+            Title="Current Price"
+            Icon="dollar.png"
+            ContentTemplate="{DataTemplate currentPrice:CurrentPricePage}"
+            Route="CurrentPricePage" />
+
+        <ShellContent
+            Title="Counter"
+            Icon="counter.png"
+            ContentTemplate="{DataTemplate counter:CounterPage}"
+            Route="CounterPage" />
+    </TabBar>
 
 </Shell>

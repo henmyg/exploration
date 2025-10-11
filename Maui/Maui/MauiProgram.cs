@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Maui.Features.Counter;
+using Maui.Features.CurrentPrice;
 
 namespace Maui
 {
@@ -19,9 +20,15 @@ namespace Maui
             // Register Shell
             builder.Services.AddSingleton<AppShell>();
 
+            // Register HttpClient
+            builder.Services.AddSingleton<HttpClient>();
+
             // Register Features
             builder.Services.AddSingleton<CounterViewModel>();
             builder.Services.AddSingleton<CounterPage>();
+
+            builder.Services.AddSingleton<CurrentPriceViewModel>();
+            builder.Services.AddSingleton<CurrentPricePage>();
 
 #if DEBUG
     		builder.Logging.AddDebug();
