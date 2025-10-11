@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
+             x:Class="Maui.Features.CurrentPrice.CurrentPricePage"
+             x:DataType="currentPrice:CurrentPriceViewModel"
+             Title="Current Price">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+
+            <Label
+                Text="Current Electricity Price"
+                FontSize="32"
+                HorizontalOptions="Center"
+                Margin="0,40,0,0" />
+
+            <Border
+                StrokeShape="RoundRectangle 10"
+                Stroke="#E0E0E0"
+                Background="#F5F5F5"
+                Padding="20"
+                Margin="0,20,0,0">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="Price (DKK)"
+                        FontSize="16"
+                        HorizontalOptions="Center" />
+
+                    <Label
+                        Text="{Binding CurrentPriceDKK, StringFormat='{0:F2}'}"
+                        FontSize="48"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding CurrentPriceDKK, Converter={StaticResource IsNotNullConverter}}" />
+
+                    <Label
+                        Text="--"
+                        FontSize="48"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding CurrentPriceDKK, Converter={StaticResource IsNullConverter}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button
+                Text="Refresh"
+                Command="{Binding LoadCurrentPriceCommand}"
+                HorizontalOptions="Center"
+                Margin="0,20,0,0" />
+
+            <ActivityIndicator
+                IsRunning="{Binding IsLoading}"
+                IsVisible="{Binding IsLoading}"
+                HorizontalOptions="Center" />
+
+            <Label
+                Text="{Binding ErrorMessage}"
+                TextColor="Red"
+                HorizontalOptions="Center"
+                IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
