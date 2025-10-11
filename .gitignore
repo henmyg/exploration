@@ -1,5 +1,5 @@
-Maui/Maui/bin/
-Maui/Maui/obj/
+bin/
+obj/
 Maui/.vs/
 *.user
 .claude/
