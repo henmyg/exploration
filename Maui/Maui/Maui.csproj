@@ -70,4 +70,8 @@
 		<ProjectReference Include="..\Maui.Infrastructure\Maui.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Maui.Tests" />
+	</ItemGroup>
+
 </Project>
