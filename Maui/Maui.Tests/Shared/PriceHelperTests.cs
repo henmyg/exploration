@@ -1,5 +1,5 @@
-using Maui.Infrastructure.Api.Models;
 using Maui.Shared;
+using Maui.Shared.Models;
 using Xunit;
 
 namespace Maui.Tests.Shared;
@@ -13,53 +13,61 @@ public class PriceHelperTests
         var now = new DateTime(2025, 10, 11, 12, 0, 0, DateTimeKind.Utc);
         var records = new[]
         {
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(-5),
+                TimeUtc = now.AddHours(-5),
+                TimeDk = now.AddHours(-5).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 100m
+                PriceDkk = 100m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(-4),
+                TimeUtc = now.AddHours(-4),
+                TimeDk = now.AddHours(-4).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 150m
+                PriceDkk = 150m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(-3),
+                TimeUtc = now.AddHours(-3),
+                TimeDk = now.AddHours(-3).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 175m
+                PriceDkk = 175m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(-2),
+                TimeUtc = now.AddHours(-2),
+                TimeDk = now.AddHours(-2).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 225m
+                PriceDkk = 225m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(-1),
+                TimeUtc = now.AddHours(-1),
+                TimeDk = now.AddHours(-1).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 200m  // This is the correct answer
+                PriceDkk = 200m  // This is the correct answer
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(1),
+                TimeUtc = now.AddHours(1),
+                TimeDk = now.AddHours(1).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 250m
+                PriceDkk = 250m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(2),
+                TimeUtc = now.AddHours(2),
+                TimeDk = now.AddHours(2).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 300m
+                PriceDkk = 300m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(3),
+                TimeUtc = now.AddHours(3),
+                TimeDk = now.AddHours(3).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 350m
+                PriceDkk = 350m
             }
         };
 
@@ -68,8 +76,8 @@ public class PriceHelperTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(200m, result.DayAheadPriceDKK);
-        Assert.Equal(now.AddHours(-1), result.TimeUTC);
+        Assert.Equal(200m, result.PriceDkk);
+        Assert.Equal(now.AddHours(-1), result.TimeUtc);
     }
 
     [Fact]
@@ -79,17 +87,19 @@ public class PriceHelperTests
         var now = DateTime.UtcNow;
         var records = new[]
         {
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(1),
+                TimeUtc = now.AddHours(1),
+                TimeDk = now.AddHours(1).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 100m
+                PriceDkk = 100m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(2),
+                TimeUtc = now.AddHours(2),
+                TimeDk = now.AddHours(2).AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 200m
+                PriceDkk = 200m
             }
         };
 
@@ -105,7 +115,7 @@ public class PriceHelperTests
     {
         // Arrange
         var now = DateTime.UtcNow;
-        var records = Array.Empty<DayAheadPriceRecord>();
+        var records = Array.Empty<PriceRecord>();
 
         // Act
         var result = records.GetCurrentPrice(now);
@@ -121,17 +131,19 @@ public class PriceHelperTests
         var now = DateTime.UtcNow;
         var records = new[]
         {
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now,
+                TimeUtc = now,
+                TimeDk = now.AddHours(1),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 100m
+                PriceDkk = 100m
             },
-            new DayAheadPriceRecord
+            new PriceRecord
             {
-                TimeUTC = now.AddHours(1),
+                TimeUtc = now.AddHours(1),
+                TimeDk = now.AddHours(2),
                 PriceArea = "DK1",
-                DayAheadPriceDKK = 200m
+                PriceDkk = 200m
             }
         };
 
@@ -140,6 +152,6 @@ public class PriceHelperTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(100m, result.DayAheadPriceDKK);
+        Assert.Equal(100m, result.PriceDkk);
     }
 }

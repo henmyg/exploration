@@ -1,13 +1,16 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Maui.Infrastructure.Api;
+using Maui.Features.PriceSync;
 using Maui.Shared;
+using Maui.Shared.Services;
 
 namespace Maui.Features.CurrentPrice;
 
 public partial class CurrentPriceViewModel : ObservableObject
 {
-    private readonly HttpClient _httpClient;
+    private readonly IPriceStore _priceStore;
+    private readonly PriceSyncService _syncService;
+    private const string PriceArea = "DK1"; // Hardcoded for now, will be configurable later
 
     [ObservableProperty]
     private decimal? _currentPriceDKK;
@@ -18,9 +21,13 @@ public partial class CurrentPriceViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
-    public CurrentPriceViewModel(HttpClient httpClient)
+    public CurrentPriceViewModel(IPriceStore priceStore, PriceSyncService syncService)
     {
-        _httpClient = httpClient;
+        _priceStore = priceStore ?? throw new ArgumentNullException(nameof(priceStore));
+        _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
+
+        // Subscribe to price updates
+        _priceStore.PricesUpdated += OnPricesUpdated;
     }
 
     [RelayCommand]
@@ -32,27 +39,25 @@ public partial class CurrentPriceViewModel : ObservableObject
 
         try
         {
-            var now = DateTime.UtcNow;
-            var dayStart = now.Date;
-            var dayEnd = dayStart.AddDays(1);
+            // First, try to get from store
+            var currentPrice = GetCurrentPriceFromStore();
 
-            var response = await _httpClient.GetDayAheadPricesAsync("DK1", dayStart, dayEnd);
-
-            if (response?.Records != null)
+            if (currentPrice == null)
             {
-                var currentPrice = PriceHelper.GetCurrentPrice(response.Records);
-                if (currentPrice != null)
-                {
-                    CurrentPriceDKK = currentPrice.DayAheadPriceDKK;
-                }
-                else
-                {
-                    ErrorMessage = "No current price available";
-                }
+                // If not in store, sync from API
+                await _syncService.SyncCurrentAndUpcomingPricesAsync(PriceArea);
+
+                // Try to get from store again
+                currentPrice = GetCurrentPriceFromStore();
+            }
+
+            if (currentPrice != null)
+            {
+                CurrentPriceDKK = currentPrice.PriceDkk;
             }
             else
             {
-                ErrorMessage = "No price data available";
+                ErrorMessage = "No current price available";
             }
         }
         catch (Exception ex)
@@ -63,5 +68,26 @@ public partial class CurrentPriceViewModel : ObservableObject
         {
             IsLoading = false;
         }
+    }
+
+    private void OnPricesUpdated(object? sender, EventArgs e)
+    {
+        // When prices are updated in the store, refresh the current price
+        var currentPrice = GetCurrentPriceFromStore();
+        if (currentPrice != null)
+        {
+            CurrentPriceDKK = currentPrice.PriceDkk;
+        }
+    }
+
+    private Shared.Models.PriceRecord? GetCurrentPriceFromStore()
+    {
+        var now = DateTime.UtcNow;
+        var dayStart = now.Date;
+        var dayEnd = dayStart.AddDays(1);
+
+        // Get all prices for today and find the current one
+        var prices = _priceStore.GetPrices(PriceArea, dayStart, dayEnd);
+        return prices.GetCurrentPrice(now);
     }
 }
