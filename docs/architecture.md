@@ -8,185 +8,246 @@ This document describes the technical architecture of the Electricity Price Opti
 
 ```mermaid
 graph TB
-    API[Price API]
-
-    subgraph Infrastructure
-        RestClient[REST Client]
-        DBService[Database Service]
+    subgraph Features
+        Counter[Counter Feature]
+        CurrentPrice[Current Price Feature]
     end
 
-    PriceSync[Price Sync Feature]
-    CurrentPrice[Current Price Feature]
-    UpcomingPrices[Upcoming Prices Feature]
-    Settings[Settings Feature]
+    subgraph Shared
+        PriceHelper[Price Helper]
+    end
 
-    API -->|HTTP| RestClient
-    RestClient --> PriceSync
+    subgraph Infrastructure
+        ApiClient[Price API Client]
+        UrlBuilder[API URL Builder]
+        Models[API Models]
+    end
 
-    PriceSync -->|Write| DBService
-    Settings -->|Write| DBService
+    API[Energi Data Service API]
 
-    DBService -->|Read| CurrentPrice
-    DBService -->|Read| UpcomingPrices
-    DBService -->|Read| Settings
-
-    DBService -.->|Events| CurrentPrice
-    DBService -.->|Events| UpcomingPrices
+    CurrentPrice --> PriceHelper
+    CurrentPrice --> ApiClient
+    ApiClient --> UrlBuilder
+    ApiClient --> Models
+    ApiClient -->|HTTP| API
 ```
 
 ## Component Responsibilities
 
 ### External Layer
 
-**Electricity Price API**
-- Provides real-time electricity prices
-- Supplies price forecasts for upcoming hours
+**Energi Data Service API**
+- Danish energy data service (https://api.energidataservice.dk)
+- Provides real-time electricity prices via DayAheadPrices dataset
+- Supplies price data for different Danish price areas (DK1, DK2)
 
-### Shared Infrastructure
+### Infrastructure Layer (`Maui.Infrastructure`)
 
-**REST Client**
-- Thin wrapper around HTTP communication
-- Only used by Price Sync feature
-- No business logic
+**Price API Client** (`PriceApiClient.cs`)
+- Extension method on HttpClient: `GetDayAheadPricesAsync()`
+- Handles HTTP communication with the API
+- Deserializes JSON responses to strongly-typed models
+- Parameters: price area, start date, end date
 
-**SQLite Database**
-- Raw database file
-- Single source of truth for all price data
+**API URL Builder** (`PriceApiUrlBuilder.cs`)
+- Builds properly formatted API URLs
+- Handles timezone conversion to Danish time (Central European Standard Time)
+- Formats query parameters (offset, filter, sort)
+- Base URL: `https://api.energidataservice.dk/dataset/DayAheadPrices`
 
-**Database Service**
-- Thin wrapper around SQLite connection
-- Manages connection lifecycle
-- Publishes events when data changes (e.g., PricesUpdated)
-- Features subscribe to events to refresh UI
-- Single instance shared across app
+**API Models** (`Models/`)
+- `DayAheadPricesResponse`: Contains list of price records
+- `DayAheadPriceRecord`: Individual price record with UTC/DK timestamps, price area, and prices in EUR/DKK
 
-**Query Helpers**
-- Static factory methods for building common queries
-- No state, just helper functions
-- Used by feature services to avoid query duplication
+### Shared Layer (`Maui.Shared`)
+
+**Price Helper** (`PriceHelper.cs`)
+- Static helper methods for price operations
+- `GetCurrentPrice()`: Finds the price record for the current time
+- No state, just utility functions
 
 ### Features (Vertical Slices)
 
-**Price Sync Feature**
-- **Service**:
-  - Reads region setting from Database
-  - Fetches data from API via REST Client for selected region
-  - Stores price data in Database
-  - Runs on background timer
-  - Listens for settings changes and triggers immediate sync
-  - Handles sync errors and retries
-  - Only feature that talks to the API
+Each feature is self-contained in its own folder under `Features/`.
+
+**Counter Feature** (Example/Template)
+- **Page**: Simple counter UI
+- **ViewModel**: Demonstrates MVVM pattern with CommunityToolkit.Mvvm
+- Purpose: Template for creating new features
 
 **Current Price Feature**
-- **Page**: Displays current price with visual indicators
-- **ViewModel**: Formats price for display, determines status (cheap/normal/expensive)
-- **Service**:
-  - Queries current price from Database only
-  - No API access
-  - Read-only database operations
+- **Page** (`CurrentPricePage.xaml`): Displays current electricity price
+- **ViewModel** (`CurrentPriceViewModel.cs`):
+  - Injects HttpClient via constructor
+  - `LoadCurrentPriceAsync()` command to fetch current price
+  - Queries API for today's prices
+  - Uses PriceHelper to find current price record
+  - Properties: CurrentPriceDKK (nullable decimal), IsLoading (bool), ErrorMessage (string)
+  - Handles loading states and errors
+- Currently queries API directly (no database, no background sync yet)
 
-**Upcoming Prices Feature**
-- **Page**: Renders price graph for next 24-48 hours
-- **ViewModel**: Prepares chart data, calculates optimal windows
-- **Service**:
-  - Queries forecast data from Database only
-  - No API access
-  - Read-only database operations
+## Current Data Flow
 
-**Settings Feature**
-- **Page**: UI for selecting region and other preferences
-- **ViewModel**: Manages settings state
-- **Service**:
-  - Stores user preferences (region, thresholds, etc.) in Database
-  - Notifies Price Sync Service when region changes
-  - Read/write database operations for settings
-
-## Data Flow
-
-### Background Sync (Periodic)
+### Loading Current Price
 
 ```mermaid
 sequenceDiagram
-    participant Timer
-    participant SyncService
-    participant RestClient
-    participant DBService
-    participant API
+    participant View as CurrentPricePage
+    participant VM as CurrentPriceViewModel
+    participant Client as PriceApiClient
+    participant Helper as PriceHelper
+    participant API as Energi Data Service
 
-    Timer->>SyncService: Trigger sync
-    SyncService->>RestClient: Fetch prices
-    RestClient->>API: HTTP GET
-    API-->>RestClient: Price data
-    RestClient-->>SyncService: Parsed data
-    SyncService->>DBService: Store/update prices
-    DBService->>DBService: Publish PricesUpdated event
-    DBService->>DBService: Notify subscribers
+    View->>VM: User clicks load
+    VM->>VM: Set IsLoading = true
+    VM->>Client: GetDayAheadPricesAsync(DK1, today, tomorrow)
+    Client->>API: HTTP GET /dataset/DayAheadPrices
+    API-->>Client: JSON response with price records
+    Client-->>VM: DayAheadPricesResponse
+    VM->>Helper: GetCurrentPrice(records)
+    Helper-->>VM: Current price record
+    VM->>VM: Set CurrentPriceDKK
+    VM->>VM: Set IsLoading = false
+    VM-->>View: Update bindings
 ```
 
-### Feature Usage (On Demand)
+## Project Structure
 
-```mermaid
-sequenceDiagram
-    participant View
-    participant ViewModel
-    participant Service
-    participant DBService
-
-    View->>ViewModel: User opens feature
-    ViewModel->>Service: Request data
-    Service->>DBService: Query data
-    DBService-->>Service: Return data
-    Service-->>ViewModel: Return data
-    ViewModel-->>View: Update bindings
 ```
-
-### Region Change Flow
-
-```mermaid
-sequenceDiagram
-    participant SettingsView
-    participant SettingsViewModel
-    participant SettingsService
-    participant DBService
-    participant SyncService
-    participant API
-
-    SettingsView->>SettingsViewModel: User selects new region
-    SettingsViewModel->>SettingsService: Save region
-    SettingsService->>DBService: Store region setting
-    SettingsService->>SyncService: Notify region changed
-    SyncService->>DBService: Read new region
-    SyncService->>API: Fetch prices for new region
-    API-->>SyncService: Price data
-    SyncService->>DBService: Store new prices
+Maui/
+├── Maui/                           # Main MAUI application
+│   ├── Features/                   # Feature folders (vertical slices)
+│   │   ├── Counter/               # Example feature
+│   │   │   ├── CounterPage.xaml
+│   │   │   ├── CounterPage.xaml.cs
+│   │   │   └── CounterViewModel.cs
+│   │   └── CurrentPrice/          # Current price feature
+│   │       ├── CurrentPricePage.xaml
+│   │       ├── CurrentPricePage.xaml.cs
+│   │       └── CurrentPriceViewModel.cs
+│   ├── Platforms/                  # Platform-specific code
+│   ├── Resources/                  # Images, fonts, styles
+│   ├── App.xaml                    # Application entry
+│   ├── AppShell.xaml              # Shell navigation
+│   └── MauiProgram.cs             # DI configuration
+├── Maui.Infrastructure/            # Shared infrastructure
+│   ├── Api/
+│   │   ├── Models/
+│   │   │   ├── DayAheadPriceRecord.cs
+│   │   │   └── DayAheadPricesResponse.cs
+│   │   ├── PriceApiClient.cs
+│   │   └── PriceApiUrlBuilder.cs
+│   └── Maui.Infrastructure.csproj
+├── Maui.Shared/                    # Shared utilities
+│   ├── PriceHelper.cs
+│   └── Maui.Shared.csproj
+├── Maui.Tests/                     # Unit tests
+│   ├── Infrastructure/
+│   │   └── Api/
+│   │       ├── PriceApiClientTests.cs
+│   │       ├── DayAheadPriceModelTests.cs
+│   │       └── PriceApiUrlBuilderTests.cs
+│   └── Shared/
+│       └── PriceHelperTests.cs
+└── Maui.IntegrationTests/          # Integration tests
+    ├── Infrastructure/
+    │   ├── IntegrationTestBase.cs
+    │   ├── TestFixtureBase.cs
+    │   └── TestCollectionDefinitions.cs
+    └── Infrastructure/Api/
+        └── PriceApiIntegrationTests.cs
 ```
 
 ## Key Design Patterns
 
 ### Vertical Slice Architecture
-- Each feature is self-contained and owns its complete stack
-- Feature folders contain: Page + ViewModel + Service + Models
-- Features use Query Helpers for common operations or write custom queries for performance
+- Each feature is self-contained in its own folder
+- Feature folders contain: Page (XAML + code-behind) + ViewModel
 - Reduces coupling between features
-- Only infrastructure (REST Client, Database Service, Query Helpers) is shared
+- Easy to add, modify, or remove features independently
 
-### Write/Read Separation
-- **Write**: Price Sync feature writes to database (from API)
-- **Read**: Display features only read from database
-- Clear separation of concerns
-- Display features work offline
-- Sync can run independently in background
+### MVVM Pattern
+- **Model**: API models in Maui.Infrastructure
+- **View**: XAML pages with data bindings
+- **ViewModel**: Presentation logic using CommunityToolkit.Mvvm
+  - `[ObservableProperty]` for bindable properties
+  - `[RelayCommand]` for commands
+  - Constructor injection for dependencies
 
-### Settings as Data
-- Region selection and preferences stored in Database
-- Settings Feature writes user preferences to Database
-- Price Sync Service reads settings from Database (not directly from Settings Feature)
-- Settings Feature notifies Price Sync Service when critical settings change
-- Database is single source of truth for both prices and settings
+### Dependency Injection
+- Configured in `MauiProgram.cs`
+- Services registered: HttpClient, ViewModels, Pages
+- Constructor injection throughout the app
+
+### Extension Methods
+- API Client implemented as extension method on HttpClient
+- Clean, fluent API: `httpClient.GetDayAheadPricesAsync(...)`
+
+## Testing Strategy
+
+### Unit Tests (`Maui.Tests`)
+- Test individual components in isolation
+- Mock external dependencies
+- Fast, run frequently during development
+- Examples:
+  - API URL builder formatting
+  - Price model deserialization
+  - Price helper logic
+
+### Integration Tests (`Maui.IntegrationTests`)
+- Test real API integration
+- Verify endpoint availability
+- Validate data contracts
+- Marked with `[Trait("Category", "Integration")]`
+- Run explicitly, not in normal test runs
+- Examples:
+  - Real API calls to Energi Data Service
+  - End-to-end data flow validation
+
+## Future Architecture Considerations
+
+The current implementation is intentionally simple. Future enhancements may include:
+
+### Database Layer
+- SQLite for local price storage
+- Offline capability
+- Faster load times
+
+### Background Sync
+- Periodic price updates
+- Background service/worker
+- Notifications for price changes
+
+### Settings Feature
+- Region selection (DK1/DK2)
+- Price thresholds
+- User preferences
+
+### Additional Features
+- Price forecasts (24-48 hours ahead)
+- Price graphs and charts
+- Optimal usage time recommendations
+- Historical price data
 
 ### Event-Based Updates
-- Database Service publishes events when data changes (e.g., PricesUpdated, SettingsChanged)
-- Features subscribe to events via their ViewModels
-- On event, ViewModel re-queries data and updates UI bindings
-- Keeps UI fresh without polling
-- Loose coupling - features don't know who changed the data
+- Observable data patterns
+- Real-time UI updates
+- Loose coupling between components
+
+## Technology Stack
+
+- **.NET 9.0**: Core framework
+- **.NET MAUI**: Cross-platform UI framework
+- **CommunityToolkit.Mvvm**: MVVM helpers and source generators
+- **xUnit**: Testing framework
+- **System.Text.Json**: JSON serialization
+- **HttpClient**: HTTP communication
+
+## Design Principles
+
+1. **Simplicity First**: Start with the simplest implementation that works
+2. **Vertical Slices**: Features are independent and self-contained
+3. **Dependency Injection**: Loose coupling, easy testing
+4. **Separation of Concerns**: Infrastructure, features, and shared code are clearly separated
+5. **Testability**: Unit tests and integration tests for different scenarios
+6. **Progressive Enhancement**: Architecture allows for future additions without major refactoring
