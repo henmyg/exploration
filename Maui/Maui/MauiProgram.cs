@@ -29,6 +29,9 @@ namespace Maui
             builder.Services.AddSingleton<IPriceStore, InMemoryPriceStore>();
             builder.Services.AddSingleton<PriceSyncService>();
 
+            // Register Background Services
+            builder.Services.AddHostedService<BackgroundPriceSyncService>();
+
             // Register Features
             builder.Services.AddSingleton<CounterViewModel>();
             builder.Services.AddSingleton<CounterPage>();
