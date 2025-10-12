@@ -1,0 +1,3 @@
+# This directory will contain feature-based integration tests
+# Each feature can have its own integration test file following the pattern:
+# Features/FeatureName/FeatureNameIntegrationTests.cs
