@@ -10,6 +10,7 @@ namespace Maui.IntegrationTests.Infrastructure.Api;
 /// Integration tests for the Price API endpoint to verify it's alive and returning correct data.
 /// </summary>
 [Collection("API Integration Tests")]
+[Trait("Category", "Integration")]
 public class PriceApiIntegrationTests : IntegrationTestBase
 {
     protected override void ConfigureServices(IServiceCollection services)

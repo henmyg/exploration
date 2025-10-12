@@ -83,16 +83,62 @@ Tests in the same collection run sequentially and can share fixtures. Tests in d
 
 ## Running Tests
 
-```bash
-# Run all integration tests
-dotnet test Maui.IntegrationTests/Maui.IntegrationTests.csproj
+### Run Only Integration Tests (Explicitly)
 
+Integration tests are marked with `[Trait("Category", "Integration")]` to separate them from unit tests:
+
+```bash
+# Run ONLY integration tests
+dotnet test --filter "Category=Integration"
+
+# Run integration tests from the integration test project
+dotnet test Maui.IntegrationTests/Maui.IntegrationTests.csproj
+```
+
+### Exclude Integration Tests from Normal Test Runs
+
+When running all tests in the solution, exclude integration tests:
+
+```bash
+# Run all tests EXCEPT integration tests
+dotnet test --filter "Category!=Integration"
+
+# Run only unit tests (assuming your unit tests don't have the Integration trait)
+dotnet test Maui.Tests/Maui.Tests.csproj
+```
+
+### Other Useful Commands
+
+```bash
 # Run specific test class
-dotnet test Maui.IntegrationTests/Maui.IntegrationTests.csproj --filter FullyQualifiedName~MyFeatureIntegrationTests
+dotnet test --filter "FullyQualifiedName~PriceApiIntegrationTests"
 
 # Run tests with detailed output
 dotnet test Maui.IntegrationTests/Maui.IntegrationTests.csproj --logger "console;verbosity=detailed"
+
+# List all integration tests without running them
+dotnet test Maui.IntegrationTests/Maui.IntegrationTests.csproj --list-tests
 ```
+
+### Visual Studio Configuration
+
+A `.runsettings` file has been created in the solution root that automatically excludes integration tests when you click "Run All Tests" in Visual Studio.
+
+**Visual Studio will automatically:**
+- Exclude integration tests when using "Run All Tests" or Test Explorer
+- Apply the filter `Category!=Integration` by default
+
+**To run integration tests in Visual Studio:**
+1. Open Test Explorer (Test > Test Explorer)
+2. Right-click on the `Maui.IntegrationTests` project
+3. Select "Run Tests"
+
+**OR manually configure the filter:**
+1. Go to Test > Configure Run Settings > Select Solution Wide runsettings File
+2. Select the `.runsettings` file in the solution root (if not auto-detected)
+
+**To temporarily include integration tests:**
+- In Test Explorer, use the filter box and enter `Trait:Category=Integration`
 
 ## Best Practices
 
