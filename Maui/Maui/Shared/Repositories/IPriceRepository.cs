@@ -1,12 +1,12 @@
 using Maui.Shared.Models;
 
-namespace Maui.Shared.Services;
+namespace Maui.Shared.Repositories;
 
 /// <summary>
-/// Interface for the in-memory price store.
+/// Repository interface for price data storage.
 /// Simple data repository - no business logic.
 /// </summary>
-public interface IPriceStore
+public interface IPriceRepository
 {
     /// <summary>
     /// Stores or updates price records.
@@ -20,7 +20,7 @@ public interface IPriceStore
     IReadOnlyList<PriceRecord> GetPrices(string priceArea, DateTime startUtc, DateTime endUtc);
 
     /// <summary>
-    /// Event raised when prices are updated in the store.
+    /// Event raised when prices are updated in the repository.
     /// </summary>
     event EventHandler? PricesUpdated;
 }

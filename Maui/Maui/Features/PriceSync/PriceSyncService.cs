@@ -1,21 +1,21 @@
 using Maui.Infrastructure.Api;
 using Maui.Shared.Models;
-using Maui.Shared.Services;
+using Maui.Shared.Repositories;
 
 namespace Maui.Features.PriceSync;
 
 /// <summary>
-/// Service responsible for syncing price data from the API to the in-memory store.
+/// Service responsible for syncing price data from the API to the price repository.
 /// </summary>
 public class PriceSyncService
 {
     private readonly HttpClient _httpClient;
-    private readonly IPriceStore _priceStore;
+    private readonly IPriceRepository _priceRepository;
 
-    public PriceSyncService(HttpClient httpClient, IPriceStore priceStore)
+    public PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _priceStore = priceStore ?? throw new ArgumentNullException(nameof(priceStore));
+        _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class PriceSyncService
             return;
 
         // Convert API records to app-specific records and store them
-        _priceStore.StorePrices(response.Records.ToPriceRecords());
+        _priceRepository.StorePrices(response.Records.ToPriceRecords());
     }
 
     /// <summary>

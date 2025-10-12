@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using Maui.Shared.Models;
 
-namespace Maui.Shared.Services;
+namespace Maui.Shared.Repositories;
 
 /// <summary>
-/// Thread-safe in-memory implementation of the price store.
+/// Thread-safe in-memory implementation of the price repository.
 /// Stores prices indexed by price area and timestamp for fast retrieval.
 /// </summary>
-public class InMemoryPriceStore : IPriceStore
+public class InMemoryPriceRepository : IPriceRepository
 {
     private readonly ConcurrentDictionary<string, SortedList<DateTime, PriceRecord>> _pricesByArea = new();
 

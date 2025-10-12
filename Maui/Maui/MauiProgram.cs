@@ -2,7 +2,7 @@
 using Maui.Features.Counter;
 using Maui.Features.CurrentPrice;
 using Maui.Features.PriceSync;
-using Maui.Shared.Services;
+using Maui.Shared.Repositories;
 
 namespace Maui
 {
@@ -26,7 +26,7 @@ namespace Maui
             builder.Services.AddSingleton<HttpClient>();
 
             // Register Shared Services
-            builder.Services.AddSingleton<IPriceStore, InMemoryPriceStore>();
+            builder.Services.AddSingleton<IPriceRepository, InMemoryPriceRepository>();
             builder.Services.AddSingleton<PriceSyncService>();
 
             // Register Background Services
