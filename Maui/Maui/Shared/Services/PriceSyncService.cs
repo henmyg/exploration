@@ -2,7 +2,7 @@ using Maui.Infrastructure.Api;
 using Maui.Shared.Models;
 using Maui.Shared.Repositories;
 
-namespace Maui.Features.PriceSync;
+namespace Maui.Shared.Services;
 
 /// <summary>
 /// Service responsible for syncing price data from the API to the price repository.

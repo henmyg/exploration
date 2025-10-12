@@ -1,8 +1,8 @@
-using Maui.Features.PriceSync;
 using Maui.Infrastructure.Api.Models;
+using Maui.Shared.Services;
 using Xunit;
 
-namespace Maui.Tests.Features.PriceSync;
+namespace Maui.Tests.Shared.Services;
 
 public class PriceSyncOperationsTests
 {
