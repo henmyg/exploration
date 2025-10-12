@@ -42,25 +42,15 @@
                         FontAttributes="Bold"
                         HorizontalOptions="Center"
                         IsVisible="{Binding CurrentPriceDKK, Converter={StaticResource IsNullConverter}}" />
+
+                    <Label
+                        Text="Prices update automatically every hour"
+                        FontSize="12"
+                        TextColor="Gray"
+                        HorizontalOptions="Center"
+                        Margin="0,10,0,0" />
                 </VerticalStackLayout>
             </Border>
-
-            <Button
-                Text="Refresh"
-                Command="{Binding LoadCurrentPriceCommand}"
-                HorizontalOptions="Center"
-                Margin="0,20,0,0" />
-
-            <ActivityIndicator
-                IsRunning="{Binding IsLoading}"
-                IsVisible="{Binding IsLoading}"
-                HorizontalOptions="Center" />
-
-            <Label
-                Text="{Binding ErrorMessage}"
-                TextColor="Red"
-                HorizontalOptions="Center"
-                IsVisible="{Binding ErrorMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
 
         </VerticalStackLayout>
     </ScrollView>
