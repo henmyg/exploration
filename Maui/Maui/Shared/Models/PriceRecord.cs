@@ -3,6 +3,7 @@ namespace Maui.Shared.Models;
 /// <summary>
 /// Application-specific price record stored in the in-memory store.
 /// Simplified model containing only the data we need.
+/// Time is stored in UTC; local time conversions should be done in ViewModels.
 /// </summary>
 public record PriceRecord
 {
@@ -10,11 +11,6 @@ public record PriceRecord
     /// Timestamp in UTC
     /// </summary>
     public required DateTime TimeUtc { get; init; }
-
-    /// <summary>
-    /// Timestamp in Danish time (Europe/Copenhagen)
-    /// </summary>
-    public required DateTime TimeDk { get; init; }
 
     /// <summary>
     /// Price area (DK1 or DK2)

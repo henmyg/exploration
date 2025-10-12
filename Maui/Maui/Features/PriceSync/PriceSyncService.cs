@@ -66,7 +66,6 @@ internal static class PriceSyncOperations
         return new PriceRecord
         {
             TimeUtc = apiRecord.TimeUTC,
-            TimeDk = apiRecord.TimeDK,
             PriceArea = apiRecord.PriceArea,
             PriceDkk = apiRecord.DayAheadPriceDKK,
             PriceEur = apiRecord.DayAheadPriceEUR
