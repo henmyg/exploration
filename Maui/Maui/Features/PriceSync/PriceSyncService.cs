@@ -56,7 +56,7 @@ public class PriceSyncService
 /// <summary>
 /// Pure functions for mapping between API models and app models.
 /// </summary>
-file static class PriceSyncOperations
+internal static class PriceSyncOperations
 {
     /// <summary>
     /// Converts a single API price record to an app-specific price record.
