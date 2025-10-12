@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Maui.Features.Counter;
 using Maui.Features.CurrentPrice;
-using Maui.Features.PriceSync;
 using Maui.Shared.Repositories;
+using Maui.Shared.Services;
 
 namespace Maui
 {
@@ -30,7 +30,7 @@ namespace Maui
             builder.Services.AddSingleton<PriceSyncService>();
 
             // Register Background Services
-            builder.Services.AddHostedService<BackgroundPriceSyncService>();
+            builder.Services.AddSingleton<BackgroundPriceSyncService>();
 
             // Register Features
             builder.Services.AddSingleton<CounterViewModel>();

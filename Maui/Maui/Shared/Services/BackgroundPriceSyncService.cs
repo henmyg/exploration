@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace Maui.Features.PriceSync;
+namespace Maui.Shared.Services;
 
 /// <summary>
 /// Background service that automatically syncs prices at regular intervals.

@@ -1,4 +1,6 @@
-﻿namespace Maui
+﻿using Maui.Shared.Services;
+
+namespace Maui
 {
     public partial class App : Application
     {
@@ -13,6 +15,14 @@
         protected override Window CreateWindow(IActivationState? activationState)
         {
             return new Window(_appShell);
+        }
+
+        protected override async void OnStart()
+        {
+            var services = Current?.Handler.MauiContext?.Services;
+            var hostedService = services?.GetRequiredService<BackgroundPriceSyncService>() ?? throw new ArgumentNullException(nameof(BackgroundPriceSyncService));
+            
+            await hostedService.StartAsync(CancellationToken.None);
         }
     }
 }
