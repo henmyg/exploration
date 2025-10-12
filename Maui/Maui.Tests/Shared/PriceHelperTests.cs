@@ -16,56 +16,48 @@ public class PriceHelperTests
             new PriceRecord
             {
                 TimeUtc = now.AddHours(-5),
-                TimeDk = now.AddHours(-5).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 100m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(-4),
-                TimeDk = now.AddHours(-4).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 150m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(-3),
-                TimeDk = now.AddHours(-3).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 175m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(-2),
-                TimeDk = now.AddHours(-2).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 225m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(-1),
-                TimeDk = now.AddHours(-1).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 200m  // This is the correct answer
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(1),
-                TimeDk = now.AddHours(1).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 250m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(2),
-                TimeDk = now.AddHours(2).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 300m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(3),
-                TimeDk = now.AddHours(3).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 350m
             }
@@ -90,14 +82,12 @@ public class PriceHelperTests
             new PriceRecord
             {
                 TimeUtc = now.AddHours(1),
-                TimeDk = now.AddHours(1).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 100m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(2),
-                TimeDk = now.AddHours(2).AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 200m
             }
@@ -134,14 +124,12 @@ public class PriceHelperTests
             new PriceRecord
             {
                 TimeUtc = now,
-                TimeDk = now.AddHours(1),
                 PriceArea = "DK1",
                 PriceDkk = 100m
             },
             new PriceRecord
             {
                 TimeUtc = now.AddHours(1),
-                TimeDk = now.AddHours(2),
                 PriceArea = "DK1",
                 PriceDkk = 200m
             }

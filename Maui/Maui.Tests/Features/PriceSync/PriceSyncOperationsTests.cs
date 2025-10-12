@@ -11,11 +11,10 @@ public class PriceSyncOperationsTests
     {
         // Arrange
         var timeUtc = new DateTime(2025, 10, 11, 12, 0, 0, DateTimeKind.Utc);
-        var timeDk = timeUtc.AddHours(1);
         var apiRecord = new DayAheadPriceRecord
         {
             TimeUTC = timeUtc,
-            TimeDK = timeDk,
+            TimeDK = timeUtc.AddHours(1),
             PriceArea = "DK1",
             DayAheadPriceDKK = 123.45m,
             DayAheadPriceEUR = 16.54m
@@ -27,7 +26,6 @@ public class PriceSyncOperationsTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(timeUtc, result.TimeUtc);
-        Assert.Equal(timeDk, result.TimeDk);
         Assert.Equal("DK1", result.PriceArea);
         Assert.Equal(123.45m, result.PriceDkk);
         Assert.Equal(16.54m, result.PriceEur);
@@ -52,6 +50,7 @@ public class PriceSyncOperationsTests
 
         // Assert
         Assert.NotNull(result);
+        Assert.Equal(timeUtc, result.TimeUtc);
         Assert.Null(result.PriceDkk);
         Assert.Null(result.PriceEur);
     }
