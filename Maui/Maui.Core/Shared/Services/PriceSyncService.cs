@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Maui.Core.Shared.Models;
 using Maui.Core.Shared.Repositories;
 using Maui.Infrastructure.Api;
@@ -7,11 +8,13 @@ namespace Maui.Core.Shared.Services;
 /// <summary>
 /// Service responsible for syncing price data from the API to the price repository.
 /// </summary>
-public class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository)
+public partial class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository): ObservableObject
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private readonly IPriceRepository _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
 
+    [ObservableProperty]
+    private bool _isSynching;
     /// <summary>
     /// Syncs prices for the specified price area and date range.
     /// </summary>
@@ -20,18 +23,27 @@ public class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepos
         if (string.IsNullOrWhiteSpace(priceArea))
             throw new ArgumentException("Price area cannot be null or empty", nameof(priceArea));
 
-        // Fetch prices from API
-        var response = await _httpClient.GetDayAheadPricesAsync(
-            priceArea,
-            startDate,
-            endDate,
-            cancellationToken);
+        try
+        {
+            IsSynching = true;
 
-        if (response?.Records == null || response.Records.Count == 0)
-            return;
+            // Fetch prices from API
+            var response = await _httpClient.GetDayAheadPricesAsync(
+                priceArea,
+                startDate,
+                endDate,
+                cancellationToken);
 
-        // Convert API records to app-specific records and store them
-        _priceRepository.StorePrices(response.Records.ToPriceRecords());
+            if (response?.Records == null || response.Records.Count == 0)
+                return;
+
+            // Convert API records to app-specific records and store them
+            _priceRepository.StorePrices(response.Records.ToPriceRecords());
+        }
+        finally
+        {
+            IsSynching = false;
+        }
     }
 
     /// <summary>

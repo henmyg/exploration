@@ -2,11 +2,10 @@ using Maui.Core.Features.CurrentPrice;
 
 namespace Maui.Features.CurrentPrice;
 
-public partial class CurrentPricePage : ContentPage
+public partial class CurrentPricePage : ContentView
 {
-    public CurrentPricePage(CurrentPriceViewModel viewModel)
+    public CurrentPricePage()
     {
         InitializeComponent();
-        BindingContext = viewModel;
     }
 }

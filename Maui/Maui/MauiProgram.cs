@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
+using Maui.Core.Features;
 using Maui.Core.Features.Counter;
 using Maui.Core.Features.CurrentPrice;
-using Maui.Features.Counter;
-using Maui.Features.CurrentPrice;
-using Maui.Core.Shared.Services;
+using Maui.Core.Features.SyncStatus;
 using Maui.Core.Shared.Repositories;
+using Maui.Core.Shared.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Maui
 {
@@ -15,6 +16,7 @@ namespace Maui
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -35,11 +37,10 @@ namespace Maui
             builder.Services.AddSingleton<BackgroundPriceSyncService>();
 
             // Register Features
-            builder.Services.AddSingleton<CounterViewModel>();
-            builder.Services.AddSingleton<CounterPage>();
-
             builder.Services.AddSingleton<CurrentPriceViewModel>();
-            builder.Services.AddSingleton<CurrentPricePage>();
+            builder.Services.AddSingleton<SyncStatusViewModel>();
+
+            builder.Services.AddSingleton<MainPageModel>();
 
 #if DEBUG
     		builder.Logging.AddDebug();

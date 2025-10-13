@@ -3,22 +3,12 @@
     x:Class="Maui.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:features="clr-namespace:Maui.Features"
     xmlns:counter="clr-namespace:Maui.Features.Counter"
     xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
     Title="Maui">
 
-    <TabBar>
-        <ShellContent
-            Title="Current Price"
-            Icon="dollar.png"
-            ContentTemplate="{DataTemplate currentPrice:CurrentPricePage}"
-            Route="CurrentPricePage" />
-
-        <ShellContent
-            Title="Counter"
-            Icon="counter.png"
-            ContentTemplate="{DataTemplate counter:CounterPage}"
-            Route="CounterPage" />
-    </TabBar>
+    <ShellContent
+        ContentTemplate="{DataTemplate features:MainPage}"/>
 
 </Shell>
