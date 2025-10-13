@@ -31,11 +31,19 @@ public partial class CurrentPriceViewModel : ObservableObject
     private Shared.Models.PriceRecord? GetCurrentPriceFromRepository()
     {
         var now = DateTime.UtcNow;
-        var dayStart = now.Date;
-        var dayEnd = dayStart.AddDays(1);
+        var (dayStart, dayEnd) = now.GetTodayDateRange();
 
         // Get all prices for today and find the current one
         var prices = _priceRepository.GetPrices(PriceArea, dayStart, dayEnd);
         return prices.GetCurrentPrice(now);
+    }
+}
+internal static class CurrentPriceOperations
+{
+    public static (DateTime dayStart, DateTime dayEnd) GetTodayDateRange(this DateTime now)
+    {
+        var dayStart = now.Date;
+        var dayEnd = dayStart.AddDays(1);
+        return (dayStart, dayEnd);
     }
 }
