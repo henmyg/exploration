@@ -183,6 +183,79 @@ Maui/
 - API Client implemented as extension method on HttpClient
 - Clean, fluent API: `httpClient.GetDayAheadPricesAsync(...)`
 
+### Static Operations Classes
+
+Services, ViewModels, and other stateful classes should extract their pure functions (logic without dependencies) into a companion static operations class located in the same file.
+
+**Pattern Structure:**
+```csharp
+// Stateful service class with dependencies
+public class MyService
+{
+    private readonly IDependency _dependency;
+
+    public MyService(IDependency dependency)
+    {
+        _dependency = dependency;
+    }
+
+    public async Task DoWorkAsync()
+    {
+        var data = await _dependency.GetDataAsync();
+        var result = MyServiceOperations.TransformData(data); // Pure function
+        await _dependency.SaveAsync(result);
+    }
+}
+
+// Static operations class with pure functions
+internal static class MyServiceOperations
+{
+    public static Result TransformData(Data input)
+    {
+        // Pure logic with no dependencies or side effects
+        return new Result { /* ... */ };
+    }
+}
+```
+
+**Extension Method Syntax Encouraged:**
+
+The operations class should use extension method syntax to enable fluent, chainable calls:
+
+```csharp
+internal static class MyServiceOperations
+{
+    public static Result TransformData(this Data input)
+    {
+        return new Result { /* ... */ };
+    }
+}
+
+// Usage:
+var result = data.TransformData(); // Fluent style
+```
+
+See `PriceSyncOperations` in `Maui.Shared.Services/PriceSyncService.cs:56-82` for a reference implementation.
+
+**Benefits:**
+- **Testability**: Pure functions are easier to test without mocking dependencies
+- **Clarity**: Separates orchestration logic (service) from business logic (operations)
+- **Reusability**: Pure functions can be reused across different services
+- **Maintainability**: Logic is isolated and can be understood independently
+- **Fluent API**: Extension methods enable natural, readable code
+
+**When to Use:**
+- Data transformations and mappings
+- Calculations and business logic
+- Validation rules
+- Formatting functions
+- Any logic that doesn't require dependencies or side effects
+
+**When NOT to Use:**
+- Logic that requires dependencies (HttpClient, repositories, etc.)
+- Operations with side effects (database writes, API calls)
+- State management
+
 ## Testing Strategy
 
 ### Unit Tests (`Maui.Tests`)
