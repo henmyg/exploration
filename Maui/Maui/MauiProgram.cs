@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using Maui.Core.Features.Counter;
+using Maui.Core.Features.CurrentPrice;
 using Maui.Features.Counter;
 using Maui.Features.CurrentPrice;
-using Maui.Shared.Repositories;
-using Maui.Shared.Services;
+using Maui.Core.Shared.Services;
+using Maui.Core.Shared.Repositories;
 
 namespace Maui
 {

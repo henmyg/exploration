@@ -8,25 +8,34 @@ This document describes the technical architecture of the Electricity Price Opti
 
 ```mermaid
 graph TB
-    subgraph Features
-        Counter[Counter Feature]
-        CurrentPrice[Current Price Feature]
+    subgraph "Maui Project (Windows-only)"
+        CounterPage[Counter Page]
+        PricePage[Current Price Page]
     end
 
-    subgraph Shared
-        PriceHelper[Price Helper]
+    subgraph "Maui.Core Project (Linux-compatible)"
+        CounterVM[Counter ViewModel]
+        PriceVM[Current Price ViewModel]
+        PriceOps[Price Operations]
     end
 
-    subgraph Infrastructure
+    subgraph "Maui.Infrastructure Project (Linux-compatible)"
+        Repos[Repositories]
+        Services[Services]
+        Models[Models]
         ApiClient[Price API Client]
         UrlBuilder[API URL Builder]
-        Models[API Models]
+        PriceHelper[Price Helper]
     end
 
     API[Energi Data Service API]
 
-    CurrentPrice --> PriceHelper
-    CurrentPrice --> ApiClient
+    CounterPage --> CounterVM
+    PricePage --> PriceVM
+    PriceVM --> Repos
+    PriceVM --> PriceHelper
+    Services --> ApiClient
+    Services --> Repos
     ApiClient --> UrlBuilder
     ApiClient --> Models
     ApiClient -->|HTTP| API
@@ -43,71 +52,113 @@ graph TB
 
 ### Infrastructure Layer (`Maui.Infrastructure`)
 
-**Price API Client** (`PriceApiClient.cs`)
+The infrastructure layer provides low-level services, repositories, and models that are shared across the application. This layer has no MAUI dependencies and can run on Linux, making it suitable for CI/CD testing.
+
+**Repositories** (`Repositories/`)
+- `IPriceRepository`: Interface for price data storage
+- `InMemoryPriceRepository`: In-memory implementation for fast access
+- Raises `PricesUpdated` event when prices change
+
+**Services** (`Services/`)
+- `PriceSyncService`: Fetches prices from API and stores in repository
+- `BackgroundPriceSyncService`: Hosted service that syncs prices periodically
+- Uses `PriceSyncOperations` static class for pure logic
+
+**Price API Client** (`Api/PriceApiClient.cs`)
 - Extension method on HttpClient: `GetDayAheadPricesAsync()`
 - Handles HTTP communication with the API
 - Deserializes JSON responses to strongly-typed models
 - Parameters: price area, start date, end date
 
-**API URL Builder** (`PriceApiUrlBuilder.cs`)
+**API URL Builder** (`Api/PriceApiUrlBuilder.cs`)
 - Builds properly formatted API URLs
 - Handles timezone conversion to Danish time (Central European Standard Time)
 - Formats query parameters (offset, filter, sort)
 - Base URL: `https://api.energidataservice.dk/dataset/DayAheadPrices`
 
 **API Models** (`Models/`)
-- `DayAheadPricesResponse`: Contains list of price records
-- `DayAheadPriceRecord`: Individual price record with UTC/DK timestamps, price area, and prices in EUR/DKK
-
-### Shared Layer (`Maui.Shared`)
+- `PriceRecord`: Price record with UTC timestamp, price area, and prices in DKK
+- `DayAheadPricesResponse`: Contains list of API price records
+- `DayAheadPriceRecord`: API model for individual price record
 
 **Price Helper** (`PriceHelper.cs`)
-- Static helper methods for price operations
+- Extension methods for price operations
 - `GetCurrentPrice()`: Finds the price record for the current time
-- No state, just utility functions
+- `GetTodayDateRange()`: Calculates date range for today's prices
 
-### Features (Vertical Slices)
+### Business Logic Layer (`Maui.Core`)
 
-Each feature is self-contained in its own folder under `Features/`.
+The business logic layer contains ViewModels and feature-specific logic. This layer uses CommunityToolkit.Mvvm but has no direct MAUI UI dependencies, allowing it to run on Linux for CI/CD testing.
 
-**Counter Feature** (Example/Template)
-- **Page**: Simple counter UI
-- **ViewModel**: Demonstrates MVVM pattern with CommunityToolkit.Mvvm
-- Purpose: Template for creating new features
+**Features** are organized using vertical slice architecture, with parallel folder structure to the UI layer:
 
-**Current Price Feature**
-- **Page** (`CurrentPricePage.xaml`): Displays current electricity price
-- **ViewModel** (`CurrentPriceViewModel.cs`):
-  - Injects HttpClient via constructor
-  - `LoadCurrentPriceAsync()` command to fetch current price
-  - Queries API for today's prices
-  - Uses PriceHelper to find current price record
-  - Properties: CurrentPriceDKK (nullable decimal), IsLoading (bool), ErrorMessage (string)
-  - Handles loading states and errors
-- Currently queries API directly (no database, no background sync yet)
+**Counter Feature** (`Features/Counter/CounterViewModel.cs`)
+- Example/template feature demonstrating the pattern
+- Raises `CounterTextChanged` event for UI to handle platform-specific accessibility
+- No direct MAUI dependencies
+
+**Current Price Feature** (`Features/CurrentPrice/`)
+- `CurrentPriceViewModel.cs`:
+  - Subscribes to `IPriceRepository.PricesUpdated` event
+  - Computed property `CurrentPriceDKK` queries repository on-demand
+  - Uses `PriceHelper.GetCurrentPrice()` extension method
+  - Pure business logic with no UI dependencies
+- `CurrentPriceOperations.cs`: Static operations for price calculations
+
+### UI Layer (`Maui`)
+
+The UI layer contains XAML pages and platform-specific code. This layer requires Windows runners for CI/CD due to MAUI workload dependencies.
+
+**Features** mirror the `Maui.Core` structure:
+
+**Counter Feature** (`Features/Counter/CounterPage.xaml`)
+- XAML page with data bindings to CounterViewModel
+- Code-behind wires up `CounterTextChanged` event to `SemanticScreenReader.Announce()`
+- Minimal platform-specific code
+
+**Current Price Feature** (`Features/CurrentPrice/CurrentPricePage.xaml`)
+- XAML page displaying current electricity price
+- Data bindings to CurrentPriceViewModel properties
+- Minimal code-behind for UI initialization
 
 ## Current Data Flow
 
-### Loading Current Price
+### Background Price Sync
+
+```mermaid
+sequenceDiagram
+    participant App as App Startup
+    participant BgService as BackgroundPriceSyncService
+    participant SyncService as PriceSyncService
+    participant Repo as InMemoryPriceRepository
+    participant Client as PriceApiClient
+    participant API as Energi Data Service
+
+    App->>BgService: Start hosted service
+    BgService->>SyncService: SyncTodaysPricesAsync()
+    SyncService->>Client: GetDayAheadPricesAsync(DK1, today, tomorrow)
+    Client->>API: HTTP GET /dataset/DayAheadPrices
+    API-->>Client: JSON response with price records
+    Client-->>SyncService: DayAheadPricesResponse
+    SyncService->>Repo: StorePrices(records)
+    Repo->>Repo: Raise PricesUpdated event
+```
+
+### Reading Current Price
 
 ```mermaid
 sequenceDiagram
     participant View as CurrentPricePage
     participant VM as CurrentPriceViewModel
-    participant Client as PriceApiClient
+    participant Repo as InMemoryPriceRepository
     participant Helper as PriceHelper
-    participant API as Energi Data Service
 
-    View->>VM: User clicks load
-    VM->>VM: Set IsLoading = true
-    VM->>Client: GetDayAheadPricesAsync(DK1, today, tomorrow)
-    Client->>API: HTTP GET /dataset/DayAheadPrices
-    API-->>Client: JSON response with price records
-    Client-->>VM: DayAheadPricesResponse
-    VM->>Helper: GetCurrentPrice(records)
+    View->>VM: Page loads (or PricesUpdated event)
+    VM->>Repo: GetPrices(DK1, today)
+    Repo-->>VM: Price records for today
+    VM->>Helper: GetCurrentPrice(records, now)
     Helper-->>VM: Current price record
-    VM->>VM: Set CurrentPriceDKK
-    VM->>VM: Set IsLoading = false
+    VM->>VM: Update CurrentPriceDKK property
     VM-->>View: Update bindings
 ```
 
@@ -115,73 +166,153 @@ sequenceDiagram
 
 ```
 Maui/
-├── Maui/                           # Main MAUI application
-│   ├── Features/                   # Feature folders (vertical slices)
-│   │   ├── Counter/               # Example feature
+├── Maui/                           # Main MAUI application (Windows-only)
+│   ├── Features/                   # Feature UI (vertical slices)
+│   │   ├── Counter/               # Counter UI
 │   │   │   ├── CounterPage.xaml
-│   │   │   ├── CounterPage.xaml.cs
-│   │   │   └── CounterViewModel.cs
-│   │   └── CurrentPrice/          # Current price feature
+│   │   │   └── CounterPage.xaml.cs
+│   │   └── CurrentPrice/          # Current price UI
 │   │       ├── CurrentPricePage.xaml
-│   │       ├── CurrentPricePage.xaml.cs
-│   │       └── CurrentPriceViewModel.cs
+│   │       └── CurrentPricePage.xaml.cs
 │   ├── Platforms/                  # Platform-specific code
 │   ├── Resources/                  # Images, fonts, styles
 │   ├── App.xaml                    # Application entry
 │   ├── AppShell.xaml              # Shell navigation
 │   └── MauiProgram.cs             # DI configuration
-├── Maui.Infrastructure/            # Shared infrastructure
+├── Maui.Core/                      # Business logic (Linux-compatible)
+│   ├── Features/                   # Feature logic (vertical slices)
+│   │   ├── Counter/               # Counter logic
+│   │   │   └── CounterViewModel.cs
+│   │   └── CurrentPrice/          # Current price logic
+│   │       ├── CurrentPriceViewModel.cs
+│   │       └── CurrentPriceOperations.cs
+│   └── Maui.Core.csproj
+├── Maui.Infrastructure/            # Shared infrastructure (Linux-compatible)
 │   ├── Api/
 │   │   ├── Models/
 │   │   │   ├── DayAheadPriceRecord.cs
 │   │   │   └── DayAheadPricesResponse.cs
 │   │   ├── PriceApiClient.cs
 │   │   └── PriceApiUrlBuilder.cs
-│   └── Maui.Infrastructure.csproj
-├── Maui.Shared/                    # Shared utilities
+│   ├── Models/
+│   │   └── PriceRecord.cs
+│   ├── Repositories/
+│   │   ├── IPriceRepository.cs
+│   │   └── InMemoryPriceRepository.cs
+│   ├── Services/
+│   │   ├── PriceSyncService.cs
+│   │   └── BackgroundPriceSyncService.cs
 │   ├── PriceHelper.cs
-│   └── Maui.Shared.csproj
-├── Maui.Tests/                     # Unit tests
+│   ├── DateTimeExtensions.cs
+│   └── Maui.Infrastructure.csproj
+├── Maui.Analyzers/                 # Roslyn analyzer for pure functions
+│   ├── PureFunctionAnalyzer.cs
+│   └── Maui.Analyzers.csproj
+├── Maui.Tests/                     # Unit tests (Linux-compatible)
 │   ├── Infrastructure/
-│   │   └── Api/
-│   │       ├── PriceApiClientTests.cs
-│   │       ├── DayAheadPriceModelTests.cs
-│   │       └── PriceApiUrlBuilderTests.cs
-│   └── Shared/
-│       └── PriceHelperTests.cs
-└── Maui.IntegrationTests/          # Integration tests
-    ├── Infrastructure/
-    │   ├── IntegrationTestBase.cs
-    │   ├── TestFixtureBase.cs
-    │   └── TestCollectionDefinitions.cs
-    └── Infrastructure/Api/
-        └── PriceApiIntegrationTests.cs
+│   │   ├── Api/
+│   │   │   ├── PriceApiClientTests.cs
+│   │   │   ├── DayAheadPriceModelTests.cs
+│   │   │   └── PriceApiUrlBuilderTests.cs
+│   │   └── PriceHelperTests.cs
+│   └── Maui.Tests.csproj
+└── Maui.IntegrationTests/          # Integration tests (Linux-compatible)
+    ├── Analyzers/
+    │   └── PureFunctionAnalyzerTests.cs
+    ├── Infrastructure/Api/
+    │   └── PriceApiIntegrationTests.cs
+    └── Maui.IntegrationTests.csproj
 ```
+
+### Project Dependencies
+
+```mermaid
+graph LR
+    Maui[Maui Project] --> Core[Maui.Core]
+    Core --> Infra[Maui.Infrastructure]
+    Tests[Maui.Tests] --> Core
+    Tests --> Infra
+    IntTests[Maui.IntegrationTests] --> Core
+    IntTests --> Infra
+    IntTests --> Analyzers[Maui.Analyzers]
+```
+
+### Dependency Flow Rationale
+
+The three-layer architecture provides clear separation of concerns:
+
+1. **Maui.Infrastructure** (bottom layer)
+   - Low-level services, repositories, models
+   - No dependencies on other projects
+   - Linux-compatible (no MAUI dependencies)
+   - Fast CI/CD testing
+
+2. **Maui.Core** (middle layer)
+   - Business logic and ViewModels
+   - Depends only on Maui.Infrastructure
+   - Uses CommunityToolkit.Mvvm but no MAUI UI
+   - Linux-compatible
+   - Fast CI/CD testing
+
+3. **Maui** (top layer)
+   - UI pages and platform-specific code
+   - Depends on both Maui.Core and Maui.Infrastructure
+   - Requires MAUI workloads (Windows/macOS runners)
+   - Slower CI/CD testing (only when necessary)
 
 ## Key Design Patterns
 
-### Vertical Slice Architecture
-- Each feature is self-contained in its own folder
-- Feature folders contain: Page (XAML + code-behind) + ViewModel
+### Multi-Project Vertical Slice Architecture
+
+The application maintains vertical slice architecture across multiple projects by duplicating the folder structure:
+
+**Benefits:**
+- Each feature is self-contained across layers (UI in Maui, logic in Maui.Core)
+- Parallel folder structure makes features easy to find
+- Business logic can be tested on Linux without MAUI dependencies
+- UI layer is thin, just wiring up platform-specific code
 - Reduces coupling between features
 - Easy to add, modify, or remove features independently
 
-### MVVM Pattern
-- **Model**: API models in Maui.Infrastructure
-- **View**: XAML pages with data bindings
-- **ViewModel**: Presentation logic using CommunityToolkit.Mvvm
+**Example structure for a feature:**
+```
+Maui/Features/CurrentPrice/
+├── CurrentPricePage.xaml      # UI definition
+└── CurrentPricePage.xaml.cs   # Platform-specific wiring
+
+Maui.Core/Features/CurrentPrice/
+├── CurrentPriceViewModel.cs   # Business logic
+└── CurrentPriceOperations.cs  # Static operations
+```
+
+### MVVM Pattern with Event-Driven UI Updates
+
+- **Model**: Domain models in Maui.Infrastructure (PriceRecord, etc.)
+- **ViewModel**: Business logic in Maui.Core using CommunityToolkit.Mvvm
   - `[ObservableProperty]` for bindable properties
   - `[RelayCommand]` for commands
   - Constructor injection for dependencies
+  - Event-driven: Subscribes to repository events, raises events for UI
+- **View**: XAML pages in Maui with data bindings
+  - Minimal code-behind: Sets BindingContext, wires up events
+  - Handles platform-specific code (accessibility, etc.)
+
+**Event Flow:**
+1. Repository raises `PricesUpdated` event
+2. ViewModel receives event, updates computed properties
+3. ViewModel calls `OnPropertyChanged()` to notify UI
+4. XAML bindings automatically update
 
 ### Dependency Injection
 - Configured in `MauiProgram.cs`
-- Services registered: HttpClient, ViewModels, Pages
+- Services registered: HttpClient, Repositories, Services, ViewModels, Pages
 - Constructor injection throughout the app
+- Lifetime management: Singletons for repositories/services, transient for pages
 
 ### Extension Methods
 - API Client implemented as extension method on HttpClient
 - Clean, fluent API: `httpClient.GetDayAheadPricesAsync(...)`
+- Price operations as extension methods: `records.GetCurrentPrice()`
 
 ### Static Operations Classes
 
@@ -235,7 +366,7 @@ internal static class MyServiceOperations
 var result = data.TransformData(); // Fluent style
 ```
 
-See `PriceSyncOperations` in `Maui.Shared.Services/PriceSyncService.cs:56-82` for a reference implementation.
+See `PriceSyncOperations` in `Maui.Infrastructure/Services/PriceSyncService.cs` for a reference implementation.
 
 **Benefits:**
 - **Testability**: Pure functions are easier to test without mocking dependencies
@@ -262,50 +393,87 @@ See `PriceSyncOperations` in `Maui.Shared.Services/PriceSyncService.cs:56-82` fo
 - Test individual components in isolation
 - Mock external dependencies
 - Fast, run frequently during development
+- Linux-compatible (runs in CI on Linux)
 - Examples:
   - API URL builder formatting
   - Price model deserialization
   - Price helper logic
+  - Repository operations
+  - ViewModel logic
 
 ### Integration Tests (`Maui.IntegrationTests`)
-- Test real API integration
-- Verify endpoint availability
-- Validate data contracts
-- Marked with `[Trait("Category", "Integration")]`
-- Run explicitly, not in normal test runs
-- Examples:
-  - Real API calls to Energi Data Service
-  - End-to-end data flow validation
+- **API Integration Tests**: Test real API integration
+  - Verify endpoint availability
+  - Validate data contracts
+  - Marked with `[Trait("Category", "Integration")]`
+  - Run explicitly, not in normal test runs
+  - Example: Real API calls to Energi Data Service
+
+- **Analyzer Tests**: Test Roslyn analyzer for pure functions
+  - Uses `Microsoft.CodeAnalysis.Testing` framework
+  - Verifies analyzer detects pure functions correctly
+  - Tests for false positives (base class methods, extension methods)
+  - Linux-compatible (runs in CI on Linux)
+  - Example: `PureFunctionAnalyzerTests.cs`
+
+### CI/CD Testing Strategy
+
+The GitHub Actions workflow (`.github/workflows/pr-validation.yml`) runs tests efficiently:
+
+1. **Core Unit Tests** (Linux, fast)
+   - Runs `Maui.Tests` on ubuntu-latest
+   - Tests Maui.Core and Maui.Infrastructure projects
+   - No MAUI dependencies, runs fast
+
+2. **Analyzer Build** (Linux, fast)
+   - Builds `Maui.Analyzers` project
+   - Verifies analyzer compiles correctly
+
+3. **Analyzer Validation** (Linux, fast)
+   - Builds `Maui.Core` with analyzer enabled
+   - Detects pure functions that should be extracted
+   - Warns (doesn't fail) if analyzer finds issues
+
+**Why Linux runners?**
+- Faster than Windows runners
+- Cheaper (free for public repos, lower cost for private)
+- Sufficient for business logic testing
+- Windows runners only needed for full MAUI app build
 
 ## Future Architecture Considerations
 
-The current implementation is intentionally simple. Future enhancements may include:
+The current implementation includes background sync and in-memory storage. Future enhancements may include:
 
 ### Database Layer
-- SQLite for local price storage
-- Offline capability
-- Faster load times
+- SQLite for persistent local price storage
+- Offline capability with last known prices
+- Faster app startup (no initial API call needed)
+- Historical price data retention
 
-### Background Sync
-- Periodic price updates
-- Background service/worker
-- Notifications for price changes
+### Enhanced Background Sync
+- Periodic price updates (currently manual)
+- Smart sync timing (check for new prices at 13:00 CET when published)
+- Retry logic for failed API calls
+- Notifications for significant price changes
 
 ### Settings Feature
-- Region selection (DK1/DK2)
-- Price thresholds
+- Region selection (DK1/DK2, currently hardcoded to DK1)
+- Price thresholds and alerts
+- Sync frequency configuration
 - User preferences
 
 ### Additional Features
 - Price forecasts (24-48 hours ahead)
-- Price graphs and charts
-- Optimal usage time recommendations
-- Historical price data
+- Price graphs and charts (hourly, daily, weekly)
+- Optimal usage time recommendations based on price patterns
+- Historical price data analysis
+- Export price data to CSV/JSON
 
-### Event-Based Updates
-- Observable data patterns
-- Real-time UI updates
-- Loose coupling between components
+### Multi-Platform Enhancements
+- Platform-specific optimizations
+- Native notifications per platform
+- Widget support (iOS, Android)
+- Desktop-specific features (system tray, always-on-top)
 
 ## Technology Stack
 

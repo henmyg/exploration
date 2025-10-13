@@ -1,20 +1,15 @@
 using Microsoft.Extensions.Hosting;
 
-namespace Maui.Shared.Services;
+namespace Maui.Core.Shared.Services;
 
 /// <summary>
 /// Background service that automatically syncs prices at regular intervals.
 /// </summary>
-public class BackgroundPriceSyncService : IHostedService, IDisposable
+public class BackgroundPriceSyncService(PriceSyncService syncService) : IHostedService, IDisposable
 {
-    private readonly PriceSyncService _syncService;
+    private readonly PriceSyncService _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
     private Timer? _timer;
     private const string PriceArea = "DK1"; // Hardcoded for now, will be configurable later
-
-    public BackgroundPriceSyncService(PriceSyncService syncService)
-    {
-        _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
-    }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -54,5 +49,6 @@ public class BackgroundPriceSyncService : IHostedService, IDisposable
     {
         _timer?.Dispose();
         _timer = null;
+        GC.SuppressFinalize(this);
     }
 }

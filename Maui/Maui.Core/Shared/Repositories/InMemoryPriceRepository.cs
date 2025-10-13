@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using Maui.Shared.Models;
+using Maui.Core.Shared.Models;
 
-namespace Maui.Shared.Repositories;
+namespace Maui.Core.Shared.Repositories;
 
 /// <summary>
 /// Thread-safe in-memory implementation of the price repository.
@@ -15,7 +15,7 @@ public class InMemoryPriceRepository : IPriceRepository
 
     public void StorePrices(IEnumerable<PriceRecord> records)
     {
-        if (records == null) throw new ArgumentNullException(nameof(records));
+        ArgumentNullException.ThrowIfNull(records);
 
         var recordsList = records.ToList();
         if (recordsList.Count == 0) return;
@@ -24,7 +24,7 @@ public class InMemoryPriceRepository : IPriceRepository
         {
             var areaStore = _pricesByArea.GetOrAdd(
                 record.PriceArea,
-                _ => new SortedList<DateTime, PriceRecord>());
+                _ => []);
 
             lock (areaStore)
             {
@@ -41,13 +41,15 @@ public class InMemoryPriceRepository : IPriceRepository
             throw new ArgumentException("Price area cannot be null or empty", nameof(priceArea));
 
         if (!_pricesByArea.TryGetValue(priceArea, out var areaStore))
-            return Array.Empty<PriceRecord>();
+            return [];
 
         lock (areaStore)
         {
-            return areaStore.Values
-                .Where(r => r.TimeUtc >= startUtc && r.TimeUtc < endUtc)
-                .ToList();
+            return [
+                .. areaStore.Values
+                    .Where(r => r.TimeUtc >= startUtc && r.TimeUtc < endUtc)
+                    .ToList()
+            ];
         }
     }
 }

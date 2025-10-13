@@ -1,4 +1,4 @@
-﻿using Maui.Shared.Services;
+﻿using Maui.Core.Shared.Services;
 
 namespace Maui
 {

@@ -1,3 +1,5 @@
+using Maui.Core.Features.Counter;
+
 namespace Maui.Features.Counter
 {
     public partial class CounterPage : ContentPage
@@ -6,6 +8,12 @@ namespace Maui.Features.Counter
         {
             InitializeComponent();
             BindingContext = viewModel;
+
+            // Wire up MAUI-specific accessibility
+            viewModel.CounterTextChanged += (sender, text) =>
+            {
+                SemanticScreenReader.Announce(text);
+            };
         }
     }
 }
