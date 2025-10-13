@@ -1,6 +1,6 @@
-using Maui.Shared.Models;
+using Maui.Core.Shared.Models;
 
-namespace Maui.Shared.Repositories;
+namespace Maui.Core.Shared.Repositories;
 
 /// <summary>
 /// Repository interface for price data storage.

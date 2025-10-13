@@ -1,8 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Maui.Shared;
-using Maui.Shared.Repositories;
+using Maui.Core.Shared.Models;
+using Maui.Core.Shared.Repositories;
+using Maui.Infrastructure;
 
-namespace Maui.Features.CurrentPrice;
+namespace Maui.Core.Features.CurrentPrice;
 
 public partial class CurrentPriceViewModel : ObservableObject
 {
@@ -28,7 +29,7 @@ public partial class CurrentPriceViewModel : ObservableObject
         OnPropertyChanged(nameof(CurrentPriceDKK));
     }
 
-    private Shared.Models.PriceRecord? GetCurrentPriceFromRepository()
+    private PriceRecord? GetCurrentPriceFromRepository()
     {
         var now = DateTime.UtcNow;
         var (dayStart, dayEnd) = now.GetTodayDateRange();
@@ -38,7 +39,8 @@ public partial class CurrentPriceViewModel : ObservableObject
         return prices.GetCurrentPrice(now);
     }
 }
-internal static class CurrentPriceOperations
+
+public static class CurrentPriceOperations
 {
     public static (DateTime dayStart, DateTime dayEnd) GetTodayDateRange(this DateTime now)
     {
@@ -46,4 +48,15 @@ internal static class CurrentPriceOperations
         var dayEnd = dayStart.AddDays(1);
         return (dayStart, dayEnd);
     }
+
+    /// <summary>
+    /// Gets the current price from price records.
+    /// </summary>
+    public static PriceRecord? GetCurrentPrice(
+        this IEnumerable<PriceRecord> records,
+        DateTime? now = null
+    ) => records
+        .Where(r => r.TimeUtc <= (now ?? DateTime.UtcNow))
+        .OrderByDescending(r => r.TimeUtc)
+        .FirstOrDefault();
 }

@@ -1,5 +1,5 @@
-using Maui.Shared;
-using Maui.Shared.Models;
+using Maui.Core.Features.CurrentPrice;
+using Maui.Core.Shared.Models;
 using Xunit;
 
 namespace Maui.Tests.Shared;

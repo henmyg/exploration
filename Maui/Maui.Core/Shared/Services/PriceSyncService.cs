@@ -1,22 +1,16 @@
+using Maui.Core.Shared.Models;
+using Maui.Core.Shared.Repositories;
 using Maui.Infrastructure.Api;
-using Maui.Shared.Models;
-using Maui.Shared.Repositories;
 
-namespace Maui.Shared.Services;
+namespace Maui.Core.Shared.Services;
 
 /// <summary>
 /// Service responsible for syncing price data from the API to the price repository.
 /// </summary>
-public class PriceSyncService
+public class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository)
 {
-    private readonly HttpClient _httpClient;
-    private readonly IPriceRepository _priceRepository;
-
-    public PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository)
-    {
-        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
-    }
+    private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+    private readonly IPriceRepository _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
 
     /// <summary>
     /// Syncs prices for the specified price area and date range.
@@ -56,7 +50,7 @@ public class PriceSyncService
 /// <summary>
 /// Pure functions for mapping between API models and app models.
 /// </summary>
-internal static class PriceSyncOperations
+public static class PriceSyncOperations
 {
     /// <summary>
     /// Converts a single API price record to an app-specific price record.

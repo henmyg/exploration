@@ -1,5 +1,5 @@
+using Maui.Core.Shared.Services;
 using Maui.Infrastructure.Api.Models;
-using Maui.Shared.Services;
 using Xunit;
 
 namespace Maui.Tests.Shared.Services;

@@ -1,4 +1,4 @@
-namespace Maui.Shared.Models;
+namespace Maui.Core.Shared.Models;
 
 /// <summary>
 /// Application-specific price record stored in the in-memory store.

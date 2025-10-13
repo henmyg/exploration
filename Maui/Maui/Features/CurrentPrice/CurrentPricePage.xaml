@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
+             xmlns:currentPrice="clr-namespace:Maui.Core.Features.CurrentPrice;assembly=Maui.Core"
              x:Class="Maui.Features.CurrentPrice.CurrentPricePage"
              x:DataType="currentPrice:CurrentPriceViewModel"
              Title="Current Price">
