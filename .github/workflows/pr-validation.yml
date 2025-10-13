@@ -1,0 +1,112 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'Maui/**'
+      - '**.cs'
+      - '**.csproj'
+      - '.github/workflows/pr-validation.yml'
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install MAUI workloads
+      run: dotnet workload install maui --skip-manifest-update
+
+    - name: Restore test project dependencies
+      run: dotnet restore Maui/Maui.Tests/Maui.Tests.csproj
+
+    - name: Build test project
+      run: dotnet build Maui/Maui.Tests/Maui.Tests.csproj --configuration Release --no-restore
+
+    - name: Run unit tests
+      run: dotnet test Maui/Maui.Tests/Maui.Tests.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Unit Test Results
+        path: '**/test-results.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+  analyzer-build:
+    name: Build Roslyn Analyzer
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore analyzer dependencies
+      run: dotnet restore Maui/Maui.Analyzers/Maui.Analyzers.csproj
+
+    - name: Build analyzer
+      run: dotnet build Maui/Maui.Analyzers/Maui.Analyzers.csproj --configuration Release --no-restore
+
+    - name: Verify analyzer package
+      run: |
+        if [ ! -f Maui/Maui.Analyzers/bin/Release/netstandard2.0/Maui.Analyzers.dll ]; then
+          echo "Error: Analyzer DLL not found"
+          exit 1
+        fi
+        echo "Analyzer built successfully"
+
+  analyzer-validation:
+    name: Validate Code with Analyzer
+    runs-on: windows-latest
+    needs: analyzer-build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install MAUI workloads
+      run: dotnet workload install maui --skip-manifest-update
+
+    - name: Restore dependencies
+      run: dotnet restore Maui/Maui.sln
+
+    - name: Build main project with analyzer
+      shell: pwsh
+      run: |
+        Write-Host "Building MAUI project with Roslyn analyzer enabled..."
+        dotnet build Maui/Maui/Maui.csproj --configuration Release --no-restore -f net9.0 > build-output.log 2>&1
+
+        # Check for MAUI001 warnings
+        $content = Get-Content build-output.log -Raw
+        if ($content -match "MAUI001") {
+          Write-Host "::warning::Code contains methods that should be extracted to static operations classes"
+          Get-Content build-output.log | Select-String "MAUI001" | ForEach-Object {
+            Write-Host "::warning::$_"
+          }
+        } else {
+          Write-Host "No analyzer warnings found - code looks good!"
+        }
+
+        # Show full build output
+        Get-Content build-output.log
