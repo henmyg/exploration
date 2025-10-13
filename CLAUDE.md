@@ -140,6 +140,31 @@ Each platform has its own entry points that eventually call `MauiProgram.CreateM
 - MAUI uses single-project structure (SingleProject=true) for managing all platforms
 - For Windows development, use the "Windows Machine" launch profile defined in Properties/launchSettings.json
 
+### Static Operations Pattern Enforcement
+
+**IMPORTANT**: This codebase follows a pattern where pure functions (logic without dependencies or side effects) should be extracted into companion static operations classes.
+
+**When to proactively check:**
+- After implementing new features or services
+- When the user asks you to review code quality
+- Periodically when making significant changes to ViewModels or Services
+
+**How to check:**
+1. Search for ViewModels in `Maui/Features/`
+2. Search for Services in `Maui/Shared/Services/`
+3. Look for pure logic that could be extracted:
+   - Data transformations and mappings
+   - Calculations and formatting
+   - Date/time manipulations
+   - Validation rules
+   - Any logic that doesn't use class fields/properties or have side effects
+
+**Pattern reference**: See `PriceSyncService.cs` and `PriceSyncOperations` for the reference implementation.
+
+**Detailed documentation**: See `docs/architecture.md` section "Static Operations Classes" for complete pattern description.
+
+If you find extractable logic, inform the user and offer to extract it.
+
 ### Adding New Features
 
 When creating a new feature, follow the vertical slice pattern:
