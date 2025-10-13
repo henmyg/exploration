@@ -68,6 +68,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Maui.Analyzers\Maui.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Maui.Infrastructure\Maui.Infrastructure.csproj" />
 	</ItemGroup>
 
