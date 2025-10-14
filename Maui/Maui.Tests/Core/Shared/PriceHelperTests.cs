@@ -2,7 +2,7 @@ using Maui.Core.Features.CurrentPrice;
 using Maui.Core.Shared.Models;
 using Xunit;
 
-namespace Maui.Tests.Shared;
+namespace Maui.Tests.Core.Shared;
 
 public class PriceHelperTests
 {

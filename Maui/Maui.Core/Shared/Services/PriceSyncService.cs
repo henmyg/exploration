@@ -2,13 +2,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Maui.Core.Shared.Models;
 using Maui.Core.Shared.Repositories;
 using Maui.Infrastructure.Api;
+using System.ComponentModel;
 
 namespace Maui.Core.Shared.Services;
+
+public interface IPriceSyncService: INotifyPropertyChanged
+{
+    bool IsSynching { get; }
+    Exception? SynchException { get; }
+    Task SyncCurrentAndUpcomingPricesAsync(string priceArea, CancellationToken cancellationToken = default);
+}
 
 /// <summary>
 /// Service responsible for syncing price data from the API to the price repository.
 /// </summary>
-public partial class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository): ObservableObject
+public partial class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository): ObservableObject, IPriceSyncService
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private readonly IPriceRepository _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));

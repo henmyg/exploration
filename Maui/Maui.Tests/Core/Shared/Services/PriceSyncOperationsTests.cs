@@ -2,7 +2,7 @@ using Maui.Core.Shared.Services;
 using Maui.Infrastructure.Api.Models;
 using Xunit;
 
-namespace Maui.Tests.Shared.Services;
+namespace Maui.Tests.Core.Shared.Services;
 
 public class PriceSyncOperationsTests
 {
