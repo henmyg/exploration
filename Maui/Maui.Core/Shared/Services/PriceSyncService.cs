@@ -15,6 +15,9 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
 
     [ObservableProperty]
     private bool _isSynching;
+
+    [ObservableProperty]
+    private Exception? _synchException;
     /// <summary>
     /// Syncs prices for the specified price area and date range.
     /// </summary>
@@ -25,6 +28,7 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
 
         try
         {
+            SynchException = null;
             IsSynching = true;
 
             // Fetch prices from API
@@ -39,6 +43,10 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
 
             // Convert API records to app-specific records and store them
             _priceRepository.StorePrices(response.Records.ToPriceRecords());
+        }
+        catch(Exception ex)
+        {
+            SynchException = ex;
         }
         finally
         {

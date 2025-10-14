@@ -1,11 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Maui.Core.Shared.Services;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Data;
 
 namespace Maui.Core.Features.SyncStatus
 {
@@ -19,16 +15,40 @@ namespace Maui.Core.Features.SyncStatus
             _priceSyncService.PropertyChanged += OnPriceSyncServicePropertyChanged;
         }
 
-        public bool IsSynching => _priceSyncService.IsSynching;
-        public string SyncText => IsSynching ? "Syncing" : "Up-to-date";
+        public State ViewState => _priceSyncService.IsSynching ? State.Synching
+            : _priceSyncService.SynchException is null ? State.UpToDate
+            : State.Error;
+
+        public bool IsSynching => ViewState == State.Synching;
+        public bool IsUpToDate => ViewState == State.UpToDate;
+        public bool IsError => ViewState == State.Error;
+
+        public string SyncText => ViewState switch
+        {
+            State.Synching => "Synching...",
+            State.UpToDate => "Up-to-date",
+            State.Error => _priceSyncService.SynchException?.Message ?? "Unknown error",
+            _ => throw new NotImplementedException()
+        };
 
         private void OnPriceSyncServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(PriceSyncService.IsSynching))
+            switch (e.PropertyName)
             {
-                OnPropertyChanged(nameof(IsSynching));
-                OnPropertyChanged(nameof(SyncText));
+                case nameof(PriceSyncService.IsSynching):
+                case nameof(PriceSyncService.SynchException):
+                    OnPropertyChanged(nameof(ViewState));
+                    OnPropertyChanged(nameof(IsSynching));
+                    OnPropertyChanged(nameof(IsUpToDate));
+                    OnPropertyChanged(nameof(IsError));
+                    OnPropertyChanged(nameof(SyncText));
+                    break;
             }
+        }
+
+        public enum State
+        {
+            Synching, UpToDate, Error
         }
     }
 }
