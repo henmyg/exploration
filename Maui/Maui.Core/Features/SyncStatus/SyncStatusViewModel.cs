@@ -1,15 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Maui.Core.Shared.Services;
 using System.ComponentModel;
-using System.Data;
 
 namespace Maui.Core.Features.SyncStatus
 {
     public partial class SyncStatusViewModel: ObservableObject
     {
-        private readonly PriceSyncService _priceSyncService;
+        private readonly IPriceSyncService _priceSyncService;
 
-        public SyncStatusViewModel(PriceSyncService priceSyncService)
+        public SyncStatusViewModel(IPriceSyncService priceSyncService)
         {
             _priceSyncService = priceSyncService ?? throw new ArgumentNullException(nameof(priceSyncService));
             _priceSyncService.PropertyChanged += OnPriceSyncServicePropertyChanged;

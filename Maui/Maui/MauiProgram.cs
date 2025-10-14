@@ -31,7 +31,7 @@ namespace Maui
 
             // Register Shared Services
             builder.Services.AddSingleton<IPriceRepository, InMemoryPriceRepository>();
-            builder.Services.AddSingleton<PriceSyncService>();
+            builder.Services.AddSingleton<IPriceSyncService, PriceSyncService>();
 
             // Register Background Services
             builder.Services.AddSingleton<BackgroundPriceSyncService>();
