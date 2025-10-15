@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Maui;
+using LiveChartsCore.SkiaSharpView.Maui;
 using Maui.Core.Features;
 using Maui.Core.Features.CurrentPrice;
 using Maui.Core.Features.PriceGraph;
@@ -6,6 +7,7 @@ using Maui.Core.Features.SyncStatus;
 using Maui.Core.Shared.Repositories;
 using Maui.Core.Shared.Services;
 using Microsoft.Extensions.Logging;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 
 namespace Maui
 {
@@ -17,6 +19,8 @@ namespace Maui
             builder
                 .UseMauiApp<App>()
                 .UseMauiCommunityToolkit()
+                .UseSkiaSharp()
+                .UseLiveCharts()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
