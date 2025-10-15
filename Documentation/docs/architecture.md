@@ -102,7 +102,7 @@ The UI layer contains XAML pages and platform-specific code. This layer requires
 
 **IMPORTANT: ContentView Pattern**
 
-Features should be implemented as `ContentView` components, not `ContentPage`, for better composability:
+Features are implemented as `ContentView` components, not `ContentPage`:
 
 - **Feature Views**: Each feature is a `ContentView` (e.g., `CurrentPriceView.xaml`, `SyncStatusView.xaml`)
   - Self-contained, reusable UI component
@@ -112,12 +112,6 @@ Features should be implemented as `ContentView` components, not `ContentPage`, f
 - **Page Composition**: Main pages compose multiple ContentViews together
   - Example: `MainPage.xaml` contains `SyncStatusView` and `CurrentPriceView`
   - Each view receives its ViewModel via `BindingContext`
-
-**Benefits:**
-- Reusability: Features can be embedded in different pages
-- Testability: Smaller, focused UI components
-- Flexibility: Easy to rearrange or combine features
-- Separation: Each feature manages its own layout independently
 
 ## Project Structure
 
@@ -194,15 +188,14 @@ graph LR
     IntTests --> Analyzers[Maui.Analyzers]
 ```
 
-### Dependency Flow Rationale
+### Dependency Flow
 
-The three-layer architecture provides clear separation of concerns:
+The three-layer architecture:
 
 1. **Maui.Infrastructure** (bottom layer)
    - Low-level services
    - No dependencies on other projects
    - Linux-compatible (no MAUI dependencies)
-   - Fast CI/CD testing
 
 2. **Maui.Core** (middle layer)
    - Business logic and ViewModels
@@ -210,27 +203,17 @@ The three-layer architecture provides clear separation of concerns:
    - Depends only on Maui.Infrastructure
    - Uses CommunityToolkit.Mvvm but no MAUI UI
    - Linux-compatible
-   - Fast CI/CD testing
 
 3. **Maui** (top layer)
    - UI pages and platform-specific code
    - Depends on both Maui.Core and Maui.Infrastructure
-   - Requires MAUI workloads (Windows/macOS runners)
-   - Slower CI/CD testing (only when necessary)
+   - Requires MAUI workloads
 
 ## Key Design Patterns
 
 ### Multi-Project Vertical Slice Architecture
 
-The application maintains vertical slice architecture across multiple projects by duplicating the folder structure:
-
-**Benefits:**
-- Each feature is self-contained across layers (UI in Maui, logic in Maui.Core)
-- Parallel folder structure makes features easy to find
-- Business logic can be tested on Linux without MAUI dependencies
-- UI layer is thin, just wiring up platform-specific code
-- Reduces coupling between features
-- Easy to add, modify, or remove features independently
+The application maintains vertical slice architecture across multiple projects by duplicating the folder structure.
 
 **Example structure for a feature:**
 ```
@@ -339,21 +322,14 @@ var result = data.TransformData(); // Fluent style
 
 See `PriceSyncOperations` in `Maui.Infrastructure/Services/PriceSyncService.cs` for a reference implementation.
 
-**Benefits:**
-- **Testability**: Pure functions are easier to test without mocking dependencies
-- **Clarity**: Separates orchestration logic (service) from business logic (operations)
-- **Reusability**: Pure functions can be reused across different services
-- **Maintainability**: Logic is isolated and can be understood independently
-- **Fluent API**: Extension methods enable natural, readable code
-
-**When to Use:**
+**Applicable for:**
 - Data transformations and mappings
 - Calculations and business logic
 - Validation rules
 - Formatting functions
-- Any logic that doesn't require dependencies or side effects
+- Logic without dependencies or side effects
 
-**When NOT to Use:**
+**Not applicable for:**
 - Logic that requires dependencies (HttpClient, repositories, etc.)
 - Operations with side effects (database writes, API calls)
 - State management
@@ -389,27 +365,21 @@ See `PriceSyncOperations` in `Maui.Infrastructure/Services/PriceSyncService.cs` 
 
 ### CI/CD Testing Strategy
 
-The GitHub Actions workflow (`.github/workflows/pr-validation.yml`) runs tests efficiently:
+The GitHub Actions workflow (`.github/workflows/pr-validation.yml`) runs tests:
 
-1. **Core Unit Tests** (Linux, fast)
+1. **Core Unit Tests** (Linux)
    - Runs `Maui.Tests` on ubuntu-latest
    - Tests Maui.Core and Maui.Infrastructure projects
-   - No MAUI dependencies, runs fast
+   - No MAUI dependencies
 
-2. **Analyzer Build** (Linux, fast)
+2. **Analyzer Build** (Linux)
    - Builds `Maui.Analyzers` project
    - Verifies analyzer compiles correctly
 
-3. **Analyzer Validation** (Linux, fast)
+3. **Analyzer Validation** (Linux)
    - Builds `Maui.Core` with analyzer enabled
    - Detects pure functions that should be extracted
    - Warns (doesn't fail) if analyzer finds issues
-
-**Why Linux runners?**
-- Faster than Windows runners
-- Cheaper (free for public repos, lower cost for private)
-- Sufficient for business logic testing
-- Windows runners only needed for full MAUI app build
 
 ## Future Architecture Considerations
 
