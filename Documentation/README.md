@@ -6,8 +6,9 @@ A project used to guide my exploration into MAUI and other topics
 
 ## Documentation
 
-- [**App Description**](docs/app-description.md) - Detailed overview, features, and architecture
-- [**Architecture**](docs/architecture.md) - Architecture diagram
+- [**App Description**](Documentation/docs/app-description.md) - Detailed overview, features, and architecture
+- [**Architecture**](Documentation/docs/architecture.md) - Architecture diagram
+- [**Decisions**](Documentation/decisions/README.md) - decisions
 - [**Claude Guide**](CLAUDE.md) - Technical documentation for claude
 
 ## License

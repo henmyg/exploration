@@ -3,6 +3,11 @@ Decision should be recorded and put in the decisions folder. Decisions should al
 
 ## Index
 
+- [Three-Layer Project Architecture for Cross-Platform CI/CD](three-layer-architecture.md) - Project structure enabling fast, cost-effective Linux-based testing
+- [Vertical Slice Architecture with Parallel Folders](vertical-slice-architecture.md) - Feature organization across layers maintaining cohesion and discoverability
+- [ContentView Over ContentPage for Features](contentview-over-contentpage.md) - UI component pattern for better composability and reusability
+- [Separation of Stateful Services/ViewModels and Pure Function Libraries](pure-function-operations.md) - Pattern for organizing business logic to maximize testability and maintainability
+
 
 ## Template
 Decisions should follow this template:

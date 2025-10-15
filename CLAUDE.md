@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 .NET MAUI electricity price optimizer with multi-project architecture. Targets: Android, iOS, macOS, Windows. Uses .NET 9.0.
 
 **For detailed architecture**, see `Documentation/docs/architecture.md`.
+**For architectural decisions**, see `Documentation/decisions/` - records the reasoning behind key project decisions.
 
 ## Build & Test
 
@@ -144,3 +145,17 @@ internal static class MyServiceOperations
 - **Linux runners**: Test Maui.Core and Maui.Infrastructure (fast, cheap)
 - **Windows runners**: Only when MAUI UI build required (slow, expensive)
 - **Analyzer validation**: Warns if pure functions not extracted
+
+## Decision Records
+
+Architectural and technical decisions are documented in `Documentation/decisions/`. When making significant design choices:
+
+1. **Create a decision record** following the template in `Documentation/decisions/README.md`
+2. **Include**: Problem statement, chosen solution with rationale, impact analysis, alternative proposals with pros/cons
+3. **Add to index**: Update the index in `Documentation/decisions/README.md`
+
+**Important**:
+- **Documentation files** (like `architecture.md`) are **snapshots of current implementation** - the "what" and "how"
+- **Decision records** are a **historical trail** - capturing decisions made, overruled, or changed throughout the project lifecycle
+- Keep docs free of detailed reasoning. The "why" goes in decision records, which are never deleted or overwritten - only added to
+- This separation keeps documentation concise while maintaining a complete decision history
