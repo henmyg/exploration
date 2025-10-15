@@ -5,9 +5,9 @@ namespace Maui.Core.Shared.Services;
 /// <summary>
 /// Background service that automatically syncs prices at regular intervals.
 /// </summary>
-public class BackgroundPriceSyncService(PriceSyncService syncService) : IHostedService, IDisposable
+public class BackgroundPriceSyncService(IPriceSyncService syncService) : IHostedService, IDisposable
 {
-    private readonly PriceSyncService _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
+    private readonly IPriceSyncService _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
     private Timer? _timer;
     private const string PriceArea = "DK1"; // Hardcoded for now, will be configurable later
 
