@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Maui;
 using Maui.Core.Features;
-using Maui.Core.Features.Counter;
 using Maui.Core.Features.CurrentPrice;
+using Maui.Core.Features.PriceGraph;
 using Maui.Core.Features.SyncStatus;
 using Maui.Core.Shared.Repositories;
 using Maui.Core.Shared.Services;
@@ -39,6 +39,7 @@ namespace Maui
             // Register Features
             builder.Services.AddSingleton<CurrentPriceViewModel>();
             builder.Services.AddSingleton<SyncStatusViewModel>();
+            builder.Services.AddSingleton<PriceGraphViewModel>();
 
             builder.Services.AddSingleton<MainPageModel>();
 
