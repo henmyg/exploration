@@ -67,7 +67,7 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
     /// </summary>
     public async Task SyncCurrentAndUpcomingPricesAsync(string priceArea, CancellationToken cancellationToken = default)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var startDate = now.Date;
         var endDate = startDate.AddDays(2); // Today and tomorrow
 

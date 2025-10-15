@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using LiveChartsCore.Defaults;
 using Maui.Core.Shared.Repositories;
 using System.Collections.ObjectModel;
 
@@ -16,7 +17,17 @@ namespace Maui.Core.Features.PriceGraph
         private ObservableCollection<PricePoint> _prices = [];
 
         [ObservableProperty]
+        private DateTimePoint[] _chartData = [];
+
+        [ObservableProperty]
         private string _timeRange = string.Empty;
+
+        public Func<DateTime, string> XAxisFormatter { get; } =
+            date => {
+                return date.TimeOfDay == TimeSpan.Zero
+                    ? date.ToString("dd/MM HH:mm")
+                    : date.ToString("HH:mm");
+            };
 
         public PriceGraphViewModel(IPriceRepository priceRepository)
         {
@@ -37,6 +48,7 @@ namespace Maui.Core.Features.PriceGraph
             var priceRecords = _priceRepository.GetPrices(_priceArea, startUtc, endUtc);
 
             Prices = priceRecords.ToPricePoints();
+            ChartData = priceRecords.ToChartData();
             TimeRange = PriceGraphOperations.FormatTimeRange(startUtc, endUtc);
         }
     }
@@ -79,6 +91,22 @@ namespace Maui.Core.Features.PriceGraph
                         p.PriceDkk!.Value))
                     .OrderBy(p => p.Time)
             );
+        }
+
+        /// <summary>
+        /// Converts price records to DateTimePoint array for chart display with time-based positioning
+        /// </summary>
+        public static DateTimePoint[] ToChartData(this IEnumerable<Maui.Core.Shared.Models.PriceRecord> priceRecords)
+        {
+            return priceRecords
+                .Where(p => p.PriceDkk.HasValue)
+                .OrderBy(p => p.TimeUtc)
+                .Select(p => new DateTimePoint
+                {
+                    DateTime = p.TimeUtc.ToLocalTime(),
+                    Value = (double)p.PriceDkk!.Value
+                })
+                .ToArray();
         }
 
         /// <summary>

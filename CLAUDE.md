@@ -110,14 +110,25 @@ internal static class MyServiceOperations
 
 2. **Create ContentViews** in `Maui/Features/MyFeature/`:
    - `MyFeatureView.xaml` (**use ContentView, not ContentPage**)
-   - `MyFeatureView.xaml.cs` (set `BindingContext` only)
+   - `MyFeatureView.xaml.cs` (**minimal code-behind** - parameterless constructor only)
    ```xml
    <ContentView xmlns="..." x:Class="..." x:DataType="...ViewModel">
        <!-- Feature UI -->
    </ContentView>
    ```
+   ```csharp
+   public partial class MyFeatureView : ContentView
+   {
+       public MyFeatureView() // Parameterless for XAML
+       {
+           InitializeComponent();
+       }
+   }
+   ```
 
-3. **Compose into pages** (if needed):
+3. **Compose into pages**:
+   - Parent page sets `BindingContext` for child views
+   - Views remain composable and reusable
    ```xml
    <!-- MainPage.xaml -->
    <ContentPage>
@@ -128,16 +139,18 @@ internal static class MyServiceOperations
 4. **Register in `MauiProgram.cs`**:
    ```csharp
    builder.Services.AddSingleton<MyFeatureViewModel>();
-   builder.Services.AddSingleton<MyFeatureView>();
+   builder.Services.AddTransient<MyFeatureView>(); // Transient for views
    ```
 
 ## Key Conventions
 
 - **Dependency flow**: Maui → Maui.Core → Maui.Infrastructure (never reverse)
 - **ContentView over ContentPage**: Features are ContentViews, composed into ContentPages
+- **BindingContext responsibility**: Parent pages set BindingContext for child views (views don't set their own)
+- **View constructors**: Parameterless only - no ViewModel injection in view constructors
 - **Event-driven updates**: Repositories raise events, ViewModels subscribe
 - **Extension methods**: Prefer fluent API style for operations
-- **DI lifetimes**: Singletons for services/repos, transient for views
+- **DI lifetimes**: Singletons for services/repos/ViewModels, transient for views
 - **Testing**: Unit tests for Core/Infrastructure, integration tests for API
 
 ## CI/CD
