@@ -9,6 +9,6 @@
              Title="MainPage">
     <VerticalStackLayout>
         <syncStatus:SyncStatusView BindingContext="{Binding SyncStatus}" />
-        <currentPrice:CurrentPricePage BindingContext="{Binding CurrentPrice}"/>
+        <currentPrice:CurrentPriceView BindingContext="{Binding CurrentPrice}"/>
     </VerticalStackLayout>
 </ContentPage>

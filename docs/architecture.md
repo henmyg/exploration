@@ -8,18 +8,16 @@ This document describes the technical architecture of the Electricity Price Opti
 
 ```mermaid
 graph TB
-    subgraph "Maui Project (Windows-only)"
-        CounterPage[Counter Page]
+    subgraph "Maui"
         PricePage[Current Price Page]
     end
 
-    subgraph "Maui.Core Project (Linux-compatible)"
-        CounterVM[Counter ViewModel]
+    subgraph "Maui.Core"
         PriceVM[Current Price ViewModel]
         PriceOps[Price Operations]
     end
 
-    subgraph "Maui.Infrastructure Project (Linux-compatible)"
+    subgraph "Maui.Infrastructure"
         Repos[Repositories]
         Services[Services]
         Models[Models]
@@ -30,9 +28,9 @@ graph TB
 
     API[Energi Data Service API]
 
-    CounterPage --> CounterVM
     PricePage --> PriceVM
     PriceVM --> Repos
+    PriceVM --> PriceOps
     PriceVM --> PriceHelper
     Services --> ApiClient
     Services --> Repos
@@ -52,7 +50,7 @@ graph TB
 
 ### Infrastructure Layer (`Maui.Infrastructure`)
 
-The infrastructure layer provides low-level services, repositories, and models that are shared across the application. This layer has no MAUI dependencies and can run on Linux, making it suitable for CI/CD testing.
+The infrastructure layer provides low-level services. This layer has no MAUI dependencies and can run on Linux, making it suitable for CI/CD testing.
 
 **Repositories** (`Repositories/`)
 - `IPriceRepository`: Interface for price data storage
@@ -88,22 +86,13 @@ The infrastructure layer provides low-level services, repositories, and models t
 
 ### Business Logic Layer (`Maui.Core`)
 
-The business logic layer contains ViewModels and feature-specific logic. This layer uses CommunityToolkit.Mvvm but has no direct MAUI UI dependencies, allowing it to run on Linux for CI/CD testing.
+The business logic layer contains ViewModels and feature-specific logic as well as app specific business logic and services. This layer uses CommunityToolkit.Mvvm but has no direct MAUI UI dependencies, allowing it to run on Linux for CI/CD testing.
 
-**Features** are organized using vertical slice architecture, with parallel folder structure to the UI layer:
+**Features** are organized using vertical slice architecture, with parallel folder structure to the UI layer.
 
-**Counter Feature** (`Features/Counter/CounterViewModel.cs`)
-- Example/template feature demonstrating the pattern
-- Raises `CounterTextChanged` event for UI to handle platform-specific accessibility
-- No direct MAUI dependencies
-
-**Current Price Feature** (`Features/CurrentPrice/`)
-- `CurrentPriceViewModel.cs`:
-  - Subscribes to `IPriceRepository.PricesUpdated` event
-  - Computed property `CurrentPriceDKK` queries repository on-demand
-  - Uses `PriceHelper.GetCurrentPrice()` extension method
-  - Pure business logic with no UI dependencies
-- `CurrentPriceOperations.cs`: Static operations for price calculations
+**Shared/repositories** contains storage class. A repository contains minimal logic. It's mainly a storage location.
+**Shared/models** contains records used by features.
+**Shared/services** contains app wide services.
 
 ### UI Layer (`Maui`)
 
@@ -111,56 +100,24 @@ The UI layer contains XAML pages and platform-specific code. This layer requires
 
 **Features** mirror the `Maui.Core` structure:
 
-**Counter Feature** (`Features/Counter/CounterPage.xaml`)
-- XAML page with data bindings to CounterViewModel
-- Code-behind wires up `CounterTextChanged` event to `SemanticScreenReader.Announce()`
-- Minimal platform-specific code
+**IMPORTANT: ContentView Pattern**
 
-**Current Price Feature** (`Features/CurrentPrice/CurrentPricePage.xaml`)
-- XAML page displaying current electricity price
-- Data bindings to CurrentPriceViewModel properties
-- Minimal code-behind for UI initialization
+Features should be implemented as `ContentView` components, not `ContentPage`, for better composability:
 
-## Current Data Flow
+- **Feature Views**: Each feature is a `ContentView` (e.g., `CurrentPriceView.xaml`, `SyncStatusView.xaml`)
+  - Self-contained, reusable UI component
+  - Data bindings to its own ViewModel
+  - Can be composed into pages or other views
 
-### Background Price Sync
+- **Page Composition**: Main pages compose multiple ContentViews together
+  - Example: `MainPage.xaml` contains `SyncStatusView` and `CurrentPriceView`
+  - Each view receives its ViewModel via `BindingContext`
 
-```mermaid
-sequenceDiagram
-    participant App as App Startup
-    participant BgService as BackgroundPriceSyncService
-    participant SyncService as PriceSyncService
-    participant Repo as InMemoryPriceRepository
-    participant Client as PriceApiClient
-    participant API as Energi Data Service
-
-    App->>BgService: Start hosted service
-    BgService->>SyncService: SyncTodaysPricesAsync()
-    SyncService->>Client: GetDayAheadPricesAsync(DK1, today, tomorrow)
-    Client->>API: HTTP GET /dataset/DayAheadPrices
-    API-->>Client: JSON response with price records
-    Client-->>SyncService: DayAheadPricesResponse
-    SyncService->>Repo: StorePrices(records)
-    Repo->>Repo: Raise PricesUpdated event
-```
-
-### Reading Current Price
-
-```mermaid
-sequenceDiagram
-    participant View as CurrentPricePage
-    participant VM as CurrentPriceViewModel
-    participant Repo as InMemoryPriceRepository
-    participant Helper as PriceHelper
-
-    View->>VM: Page loads (or PricesUpdated event)
-    VM->>Repo: GetPrices(DK1, today)
-    Repo-->>VM: Price records for today
-    VM->>Helper: GetCurrentPrice(records, now)
-    Helper-->>VM: Current price record
-    VM->>VM: Update CurrentPriceDKK property
-    VM-->>View: Update bindings
-```
+**Benefits:**
+- Reusability: Features can be embedded in different pages
+- Testability: Smaller, focused UI components
+- Flexibility: Easy to rearrange or combine features
+- Separation: Each feature manages its own layout independently
 
 ## Project Structure
 
@@ -172,8 +129,8 @@ Maui/
 │   │   │   ├── CounterPage.xaml
 │   │   │   └── CounterPage.xaml.cs
 │   │   └── CurrentPrice/          # Current price UI
-│   │       ├── CurrentPricePage.xaml
-│   │       └── CurrentPricePage.xaml.cs
+│   │       ├── CurrentPriceView.xaml
+│   │       └── CurrentPriceView.xaml.cs
 │   ├── Platforms/                  # Platform-specific code
 │   ├── Resources/                  # Images, fonts, styles
 │   ├── App.xaml                    # Application entry
@@ -242,13 +199,14 @@ graph LR
 The three-layer architecture provides clear separation of concerns:
 
 1. **Maui.Infrastructure** (bottom layer)
-   - Low-level services, repositories, models
+   - Low-level services
    - No dependencies on other projects
    - Linux-compatible (no MAUI dependencies)
    - Fast CI/CD testing
 
 2. **Maui.Core** (middle layer)
    - Business logic and ViewModels
+   - Data repositories, models and app wide services
    - Depends only on Maui.Infrastructure
    - Uses CommunityToolkit.Mvvm but no MAUI UI
    - Linux-compatible
@@ -277,8 +235,8 @@ The application maintains vertical slice architecture across multiple projects b
 **Example structure for a feature:**
 ```
 Maui/Features/CurrentPrice/
-├── CurrentPricePage.xaml      # UI definition
-└── CurrentPricePage.xaml.cs   # Platform-specific wiring
+├── CurrentPriceView.xaml      # UI definition (ContentView)
+└── CurrentPriceView.xaml.cs   # Platform-specific wiring
 
 Maui.Core/Features/CurrentPrice/
 ├── CurrentPriceViewModel.cs   # Business logic
@@ -293,15 +251,28 @@ Maui.Core/Features/CurrentPrice/
   - `[RelayCommand]` for commands
   - Constructor injection for dependencies
   - Event-driven: Subscribes to repository events, raises events for UI
-- **View**: XAML pages in Maui with data bindings
+- **View**: XAML ContentViews in Maui with data bindings
+  - **Prefer ContentView over ContentPage** for features (better composability)
   - Minimal code-behind: Sets BindingContext, wires up events
   - Handles platform-specific code (accessibility, etc.)
+  - ContentPages compose multiple ContentViews together
 
 **Event Flow:**
 1. Repository raises `PricesUpdated` event
 2. ViewModel receives event, updates computed properties
 3. ViewModel calls `OnPropertyChanged()` to notify UI
 4. XAML bindings automatically update
+
+**View Composition Pattern:**
+```xml
+<!-- MainPage.xaml (ContentPage) -->
+<ContentPage>
+    <VerticalStackLayout>
+        <syncStatus:SyncStatusView BindingContext="{Binding SyncStatus}" />
+        <currentPrice:CurrentPriceView BindingContext="{Binding CurrentPrice}"/>
+    </VerticalStackLayout>
+</ContentPage>
+```
 
 ### Dependency Injection
 - Configured in `MauiProgram.cs`
