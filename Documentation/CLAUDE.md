@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 .NET MAUI electricity price optimizer with multi-project architecture. Targets: Android, iOS, macOS, Windows. Uses .NET 9.0.
 
-**For detailed architecture**, see `Documentation/docs/architecture.md`.
+**For detailed architecture**, see `docs/architecture.md`.
 
 ## Build & Test
 
