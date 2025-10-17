@@ -2,22 +2,24 @@
 using LiveChartsCore.Defaults;
 using Maui.Core.Shared.Repositories;
 using System.Collections.ObjectModel;
+using System.Timers;
 
 namespace Maui.Core.Features.PriceGraph
 {
-    public partial class PriceGraphViewModel : ObservableObject
+    public partial class PriceGraphViewModel : ObservableObject, IDisposable
     {
         private readonly IPriceRepository _priceRepository;
         private readonly string _priceArea;
-
-        [ObservableProperty]
-        private string _text = "A graph will appear here soon";
+        private readonly System.Timers.Timer _nowUpdateTimer;
 
         [ObservableProperty]
         private ObservableCollection<PricePoint> _prices = [];
 
         [ObservableProperty]
         private DateTimePoint[] _chartData = [];
+
+        [ObservableProperty]
+        private long _now = DateTime.Now.Ticks;
 
         [ObservableProperty]
         private string _timeRange = string.Empty;
@@ -34,6 +36,15 @@ namespace Maui.Core.Features.PriceGraph
             _priceRepository = priceRepository;
             _priceArea = "DK1"; // TODO: Make configurable
             _priceRepository.PricesUpdated += OnPricesUpdated;
+
+            // Timer: Update Now property every 5 minutes
+            _nowUpdateTimer = new System.Timers.Timer(TimeSpan.FromMinutes(5).TotalMilliseconds)
+            {
+                AutoReset = true
+            };
+            _nowUpdateTimer.Elapsed += OnTimerElapsed;
+            _nowUpdateTimer.Start();
+
             LoadPrices();
         }
 
@@ -50,6 +61,19 @@ namespace Maui.Core.Features.PriceGraph
             Prices = priceRecords.ToPricePoints();
             ChartData = priceRecords.ToChartData();
             TimeRange = PriceGraphOperations.FormatTimeRange(startUtc, endUtc);
+        }
+
+        // Timer event handlers
+        private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+        {
+            Now = DateTime.Now.Ticks;
+        }
+
+        public void Dispose()
+        {
+            _nowUpdateTimer?.Stop();
+            _nowUpdateTimer?.Dispose();
+            _priceRepository.PricesUpdated -= OnPricesUpdated;
         }
     }
 
@@ -98,15 +122,14 @@ namespace Maui.Core.Features.PriceGraph
         /// </summary>
         public static DateTimePoint[] ToChartData(this IEnumerable<Maui.Core.Shared.Models.PriceRecord> priceRecords)
         {
-            return priceRecords
+            return [.. priceRecords
                 .Where(p => p.PriceDkk.HasValue)
                 .OrderBy(p => p.TimeUtc)
                 .Select(p => new DateTimePoint
                 {
                     DateTime = p.TimeUtc.ToLocalTime(),
                     Value = (double)p.PriceDkk!.Value
-                })
-                .ToArray();
+                })];
         }
 
         /// <summary>
