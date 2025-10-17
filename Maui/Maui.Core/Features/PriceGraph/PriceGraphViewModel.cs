@@ -1,16 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore.Defaults;
 using Maui.Core.Shared.Repositories;
+using Maui.Infrastructure.Services;
 using System.Collections.ObjectModel;
-using System.Timers;
 
 namespace Maui.Core.Features.PriceGraph
 {
     public partial class PriceGraphViewModel : ObservableObject, IDisposable
     {
         private readonly IPriceRepository _priceRepository;
+        private readonly ITaskDelayer _taskDelayer;
         private readonly string _priceArea;
-        private readonly System.Timers.Timer _nowUpdateTimer;
+        private readonly CancellationTokenSource _cancellationTokenSource = new();
+        private Task? _nowUpdateTask;
 
         [ObservableProperty]
         private ObservableCollection<PricePoint> _prices = [];
@@ -31,21 +33,17 @@ namespace Maui.Core.Features.PriceGraph
                     : date.ToString("HH:mm");
             };
 
-        public PriceGraphViewModel(IPriceRepository priceRepository)
+        public PriceGraphViewModel(IPriceRepository priceRepository, ITaskDelayer taskDelayer)
         {
-            _priceRepository = priceRepository;
+            _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
+            _taskDelayer = taskDelayer ?? throw new ArgumentNullException(nameof(taskDelayer));
             _priceArea = "DK1"; // TODO: Make configurable
             _priceRepository.PricesUpdated += OnPricesUpdated;
 
-            // Timer: Update Now property every 5 minutes
-            _nowUpdateTimer = new System.Timers.Timer(TimeSpan.FromMinutes(5).TotalMilliseconds)
-            {
-                AutoReset = true
-            };
-            _nowUpdateTimer.Elapsed += OnTimerElapsed;
-            _nowUpdateTimer.Start();
-
             LoadPrices();
+
+            // Start the "Now" update loop (every 5 minutes)
+            _nowUpdateTask = RunNowUpdateLoopAsync(_cancellationTokenSource.Token);
         }
 
         private void OnPricesUpdated(object? sender, EventArgs e)
@@ -63,16 +61,31 @@ namespace Maui.Core.Features.PriceGraph
             TimeRange = PriceGraphOperations.FormatTimeRange(startUtc, endUtc);
         }
 
-        // Timer event handlers
-        private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+        private async Task RunNowUpdateLoopAsync(CancellationToken cancellationToken)
         {
-            Now = DateTime.Now.Ticks;
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await _taskDelayer.DelayAsync(TimeSpan.FromMinutes(5), cancellationToken);
+
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        Now = DateTime.Now.Ticks;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when disposed
+                    break;
+                }
+            }
         }
 
         public void Dispose()
         {
-            _nowUpdateTimer?.Stop();
-            _nowUpdateTimer?.Dispose();
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
             _priceRepository.PricesUpdated -= OnPricesUpdated;
         }
     }
