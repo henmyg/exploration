@@ -22,6 +22,11 @@ public partial class CurrentPriceViewModel : ObservableObject, IDisposable
     /// </summary>
     public decimal? CurrentPriceDKK => CurrentPrice?.PriceDkk;
 
+    partial void OnCurrentPriceChanged(PriceRecord? value)
+    {
+        OnPropertyChanged(nameof(CurrentPriceDKK));
+    }
+
     public CurrentPriceViewModel(
         IPriceRepository priceRepository,
         ITaskDelayer taskDelayer,
