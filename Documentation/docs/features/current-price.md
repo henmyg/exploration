@@ -14,7 +14,7 @@ So that I can decide if I want to start electricity hungry machines
 
 ### Price updates every 15 minutes to stay synchronized
 - **AC**: `CurrentPrice_UpdatesEvery15Minutes`
-- **AC**: `CurrentPrice_TimerSyncsToNextQuarterBoundary`
+- **AC**: `CurrentPrice_CalculatesCorrectDelayToNextQuarterBoundary`
 
 ### Display placeholder/error state when data unavailable
 - **AC**: `CurrentPrice_NoDataAvailable_ShowsPlaceholder`
