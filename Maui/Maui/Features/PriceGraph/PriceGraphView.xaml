@@ -23,6 +23,20 @@
                         />
                 </lvc:SeriesCollection>
             </lvc:CartesianChart.Series>
+
+            <lvc:CartesianChart.Sections>
+                <lvc:SectionsCollection>
+                    <lvc:XamlRectangularSection
+                        Label="Now"
+                        LabelPaint="{lvc:SolidColorPaint Color='#888888'}"
+                        Xi="{Binding Now}"
+                        Xj="{Binding Now}"
+                        Stroke="{lvc:SolidColorPaint
+                        Color='#888',
+                        StrokeWidth=3}"/>
+                </lvc:SectionsCollection>
+            </lvc:CartesianChart.Sections>
+
             <lvc:CartesianChart.XAxes>
                 <lvc:AxesCollection>
                     <lvc:XamlDateTimeAxis
