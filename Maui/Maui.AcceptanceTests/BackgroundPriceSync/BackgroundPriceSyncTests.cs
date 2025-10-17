@@ -54,31 +54,70 @@ public class BackgroundPriceSyncTests
     }
 
     [Fact]
-    public void BackgroundPriceSync_SyncsAt1305Daily()
+    public async Task BackgroundPriceSync_SyncsAt1305Daily()
     {
         // Arrange
         var currentTime = new DateTime(2025, 10, 17, 13, 5, 0, DateTimeKind.Local);
         var fakeSyncService = new FakePriceSyncService();
         var fakeDelayer = new FakeTaskDelayer();
+        Func<DateTime> getNow = () => currentTime;
 
-        // TODO: BackgroundPriceSyncService needs time provider to test this properly
-        // For now, this test is a placeholder
+        var service = new BackgroundPriceSyncService(fakeSyncService, fakeDelayer, getNow);
 
-        Assert.True(true, "Test requires time provider in BackgroundPriceSyncService");
+        // Act - Start the service (triggers immediate sync)
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(50); // Give initial sync time to complete
+
+        // Initial sync should have happened
+        Assert.Equal(1, fakeSyncService.SyncCallCount);
+
+        // Wait for delay task to be initiated
+        await Task.Delay(50);
+
+        // Assert - Should request delay until next 13:05 (24 hours from now since we're at 13:05)
+        Assert.True(fakeDelayer.IsDelaying);
+        Assert.Equal(TimeSpan.FromHours(24), fakeDelayer.RequestedDelay);
+
+        // Simulate time passing to tomorrow at 13:05
+        currentTime = currentTime.AddDays(1);
+        fakeDelayer.CompleteDelay();
+        await Task.Delay(50); // Give sync time to trigger
+
+        // Should have synced again
+        Assert.Equal(2, fakeSyncService.SyncCallCount);
+
+        await service.StopAsync(CancellationToken.None);
+        service.Dispose();
     }
 
     [Fact]
-    public void BackgroundPriceSync_WaitsUntil1305_WhenStartedEarlier()
+    public async Task BackgroundPriceSync_WaitsUntil1305_WhenStartedEarlier()
     {
-        // Arrange
+        // Arrange - Start at 10:00 AM
         var currentTime = new DateTime(2025, 10, 17, 10, 0, 0, DateTimeKind.Local);
         var fakeSyncService = new FakePriceSyncService();
         var fakeDelayer = new FakeTaskDelayer();
+        Func<DateTime> getNow = () => currentTime;
 
-        // TODO: BackgroundPriceSyncService needs time provider and logic update
-        // For now, this test is a placeholder
+        var service = new BackgroundPriceSyncService(fakeSyncService, fakeDelayer, getNow);
 
-        Assert.True(true, "Test requires time provider in BackgroundPriceSyncService");
+        // Act - Start the service
+        await service.StartAsync(CancellationToken.None);
+        await Task.Delay(50); // Give initial sync time to complete
+
+        // Initial sync should have happened
+        Assert.Equal(1, fakeSyncService.SyncCallCount);
+
+        // Wait for delay task to be initiated
+        await Task.Delay(50);
+
+        // Assert - Should request delay until 13:05 today (3 hours 5 minutes from 10:00)
+        Assert.True(fakeDelayer.IsDelaying);
+        var expectedDelay = TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(5));
+        Assert.Equal(expectedDelay, fakeDelayer.RequestedDelay);
+
+        await service.StopAsync(CancellationToken.None);
+        service.Dispose();
     }
 
     [Fact]
