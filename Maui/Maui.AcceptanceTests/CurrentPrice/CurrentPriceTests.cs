@@ -1,6 +1,7 @@
 using Maui.Core.Features.CurrentPrice;
 using Maui.Core.Shared.Models;
 using Maui.Core.Shared.Repositories;
+using Maui.Infrastructure.Services;
 
 namespace Maui.AcceptanceTests.CurrentPrice;
 
@@ -49,16 +50,71 @@ public class CurrentPriceTests
         return repository;
     }
     [Fact]
+    public void CurrentPrice_UpdatesEvery15Minutes()
+    {
+        // Arrange
+        var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
+        var repository = CreatePopulatedRepository(currentTimeUtc);
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
+
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+
+        // Assert timer was started
+        Assert.True(fakeTimer.IsStarted);
+
+        // Initial price should be loaded
+        Assert.NotNull(viewModel.CurrentPrice);
+
+        // Act - Simulate timer firing by triggering the callback
+        fakeTimer.Trigger();
+
+        // Assert - Price should still be available (even if same value)
+        Assert.NotNull(viewModel.CurrentPrice);
+        Assert.Equal(1, fakeTimer.TriggerCount);
+    }
+
+    [Theory]
+    [InlineData(13, 37, 5, 7, 55)]   // 13:37:05 -> next quarter at 13:45:00 (7m 55s away)
+    [InlineData(14, 0, 0, 15, 0)]    // 14:00:00 -> next quarter at 14:15:00 (15m away)
+    [InlineData(14, 14, 59, 0, 1)]   // 14:14:59 -> next quarter at 14:15:00 (1s away)
+    [InlineData(14, 15, 0, 15, 0)]   // 14:15:00 -> next quarter at 14:30:00 (15m away)
+    [InlineData(14, 44, 30, 0, 30)]  // 14:44:30 -> next quarter at 14:45:00 (30s away)
+    public void CurrentPrice_TimerSyncsToNextQuarterBoundary(
+        int currentHour, int currentMinute, int currentSecond,
+        int expectedMinutes, int expectedSeconds)
+    {
+        // Arrange
+        var currentTimeUtc = new DateTime(2025, 10, 17, currentHour, currentMinute, currentSecond, DateTimeKind.Utc);
+        var repository = CreatePopulatedRepository(currentTimeUtc);
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
+
+        // Act
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+
+        // Assert - Timer should be configured to fire at the next quarter boundary
+        Assert.True(fakeTimer.IsStarted);
+        var expectedDelay = TimeSpan.FromMinutes(expectedMinutes).Add(TimeSpan.FromSeconds(expectedSeconds));
+        Assert.Equal(expectedDelay, fakeTimer.Delay);
+    }
+
+    [Fact]
     public void CurrentPrice_At1417_ShowsPriceFor1415Quarter()
     {
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), 14:15 = 1 * 1000 + 14 * 100 + 15 = 2415
         var expectedPrice = 2415m;
 
-        var viewModel = new CurrentPriceViewModel(repository);
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -75,11 +131,14 @@ public class CurrentPriceTests
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), 14:30 = 1 * 1000 + 14 * 100 + 30 = 2430
         var expectedPrice = 2430m;
 
-        var viewModel = new CurrentPriceViewModel(repository);
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -97,9 +156,12 @@ public class CurrentPriceTests
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
 
         var repository = new InMemoryPriceRepository();
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
         // Don't store any prices
 
-        var viewModel = new CurrentPriceViewModel(repository);
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -125,9 +187,14 @@ public class CurrentPriceTests
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, currentHour, currentMinute, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
+        var fakeTimer = new FakePeriodicTimer();
+        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), expectedHour:expectedMinute
         var expectedPrice = 1 * 1000 + expectedHour * 100 + expectedMinute;
+
+        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));

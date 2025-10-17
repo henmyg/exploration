@@ -6,6 +6,7 @@ using Maui.Core.Features.PriceGraph;
 using Maui.Core.Features.SyncStatus;
 using Maui.Core.Shared.Repositories;
 using Maui.Core.Shared.Services;
+using Maui.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 
@@ -36,6 +37,12 @@ namespace Maui
             // Register Shared Services
             builder.Services.AddSingleton<IPriceRepository, InMemoryPriceRepository>();
             builder.Services.AddSingleton<IPriceSyncService, PriceSyncService>();
+
+            // Register timer factory
+            builder.Services.AddSingleton<Func<Infrastructure.Services.ITimer>>(sp => () => new SystemTimer());
+
+            // Register time provider
+            builder.Services.AddSingleton<Func<DateTime>>(sp => () => DateTime.UtcNow);
 
             // Register Background Services
             builder.Services.AddSingleton<BackgroundPriceSyncService>();
