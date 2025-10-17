@@ -8,9 +8,10 @@ namespace Maui.Core.Features.CurrentPrice;
 public partial class CurrentPriceViewModel : ObservableObject, IDisposable
 {
     private readonly IPriceRepository _priceRepository;
-    private readonly Func<Infrastructure.Services.ITimer> _timerFactory;
-    private Infrastructure.Services.ITimer? _updateTimer;
+    private readonly ITaskDelayer _taskDelayer;
     private readonly Func<DateTime> _getUtcNow;
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private Task? _updateTask;
     private const string PriceArea = "DK1"; // Hardcoded for now, will be configurable later
 
     [ObservableProperty]
@@ -23,11 +24,11 @@ public partial class CurrentPriceViewModel : ObservableObject, IDisposable
 
     public CurrentPriceViewModel(
         IPriceRepository priceRepository,
-        Func<Infrastructure.Services.ITimer> timerFactory,
+        ITaskDelayer taskDelayer,
         Func<DateTime> getUtcNow)
     {
         _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
-        _timerFactory = timerFactory ?? throw new ArgumentNullException(nameof(timerFactory));
+        _taskDelayer = taskDelayer ?? throw new ArgumentNullException(nameof(taskDelayer));
         _getUtcNow = getUtcNow ?? throw new ArgumentNullException(nameof(getUtcNow));
 
         // Subscribe to price updates from repository
@@ -36,8 +37,8 @@ public partial class CurrentPriceViewModel : ObservableObject, IDisposable
         // Initial load
         RefreshCurrentPrice();
 
-        // Schedule first update at next quarter boundary
-        ScheduleNextUpdate();
+        // Start the update loop
+        _updateTask = RunUpdateLoopAsync(_cancellationTokenSource.Token);
     }
 
     private void OnPricesUpdated(object? sender, EventArgs e)
@@ -56,29 +57,33 @@ public partial class CurrentPriceViewModel : ObservableObject, IDisposable
         CurrentPrice = prices.GetCurrentPrice(now);
     }
 
-    private void ScheduleNextUpdate()
+    private async Task RunUpdateLoopAsync(CancellationToken cancellationToken)
     {
-        // Dispose old timer and create a new one for each reschedule
-        _updateTimer?.Dispose();
-        _updateTimer = _timerFactory();
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var now = _getUtcNow();
+                var delay = CurrentPriceOperations.CalculateDelayUntilNextQuarter(now);
+                await _taskDelayer.DelayAsync(delay, cancellationToken);
 
-        var now = _getUtcNow();
-        var delay = CurrentPriceOperations.CalculateDelayUntilNextQuarter(now);
-        _updateTimer.Start(delay, OnTimerTick);
-    }
-
-    private void OnTimerTick()
-    {
-        RefreshCurrentPrice();
-
-        // Reschedule for next quarter
-        ScheduleNextUpdate();
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    RefreshCurrentPrice();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when disposed
+                break;
+            }
+        }
     }
 
     public void Dispose()
     {
-        _updateTimer?.Stop();
-        _updateTimer?.Dispose();
+        _cancellationTokenSource.Cancel();
+        _cancellationTokenSource.Dispose();
         _priceRepository.PricesUpdated -= OnPricesUpdated;
     }
 }

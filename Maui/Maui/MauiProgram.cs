@@ -37,9 +37,7 @@ namespace Maui
             // Register Shared Services
             builder.Services.AddSingleton<IPriceRepository, InMemoryPriceRepository>();
             builder.Services.AddSingleton<IPriceSyncService, PriceSyncService>();
-
-            // Register timer factory
-            builder.Services.AddSingleton<Func<Infrastructure.Services.ITimer>>(sp => () => new SystemTimer());
+            builder.Services.AddSingleton<ITaskDelayer, SystemTaskDelayer>();
 
             // Register time provider
             builder.Services.AddSingleton<Func<DateTime>>(sp => () => DateTime.UtcNow);

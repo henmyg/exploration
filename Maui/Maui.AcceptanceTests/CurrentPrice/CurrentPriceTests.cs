@@ -1,7 +1,6 @@
 using Maui.Core.Features.CurrentPrice;
 using Maui.Core.Shared.Models;
 using Maui.Core.Shared.Repositories;
-using Maui.Infrastructure.Services;
 
 namespace Maui.AcceptanceTests.CurrentPrice;
 
@@ -50,29 +49,39 @@ public class CurrentPriceTests
         return repository;
     }
     [Fact]
-    public void CurrentPrice_UpdatesEvery15Minutes()
+    public async Task CurrentPrice_UpdatesEvery15Minutes()
     {
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        var fakeDelayer = new FakeTaskDelayer();
         Func<DateTime> getUtcNow = () => currentTimeUtc;
 
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var viewModel = new CurrentPriceViewModel(repository, fakeDelayer, getUtcNow);
 
-        // Assert timer was started
-        Assert.True(fakeTimer.IsStarted);
-
-        // Initial price should be loaded
+        // Initial price should be loaded (14:15 quarter)
         Assert.NotNull(viewModel.CurrentPrice);
+        Assert.Equal(2415m, viewModel.CurrentPrice.PriceDkk); // Day 1, 14:15
 
-        // Act - Simulate timer firing by triggering the callback
-        fakeTimer.Trigger();
+        // Wait for delay to be initiated
+        await Task.Delay(50);
 
-        // Assert - Price should still be available (even if same value)
+        // Assert delay was requested with correct duration (until 14:30, which is 13 minutes away)
+        Assert.True(fakeDelayer.IsDelaying);
+        Assert.Equal(TimeSpan.FromMinutes(13), fakeDelayer.RequestedDelay);
+
+        // Simulate time passing to 14:30
+        currentTimeUtc = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Utc);
+        fakeDelayer.CompleteDelay();
+
+        // Give the update a moment to process
+        await Task.Delay(50);
+
+        // Assert price was updated to new quarter (14:30)
         Assert.NotNull(viewModel.CurrentPrice);
-        Assert.Equal(1, fakeTimer.TriggerCount);
+        Assert.Equal(2430m, viewModel.CurrentPrice.PriceDkk); // Day 1, 14:30
+
+        viewModel.Dispose();
     }
 
     [Theory]
@@ -81,24 +90,19 @@ public class CurrentPriceTests
     [InlineData(14, 14, 59, 0, 1)]   // 14:14:59 -> next quarter at 14:15:00 (1s away)
     [InlineData(14, 15, 0, 15, 0)]   // 14:15:00 -> next quarter at 14:30:00 (15m away)
     [InlineData(14, 44, 30, 0, 30)]  // 14:44:30 -> next quarter at 14:45:00 (30s away)
-    public void CurrentPrice_TimerSyncsToNextQuarterBoundary(
+    public void CurrentPrice_CalculatesCorrectDelayToNextQuarterBoundary(
         int currentHour, int currentMinute, int currentSecond,
         int expectedMinutes, int expectedSeconds)
     {
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, currentHour, currentMinute, currentSecond, DateTimeKind.Utc);
-        var repository = CreatePopulatedRepository(currentTimeUtc);
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
-        Func<DateTime> getUtcNow = () => currentTimeUtc;
+        var expectedDelay = TimeSpan.FromMinutes(expectedMinutes).Add(TimeSpan.FromSeconds(expectedSeconds));
 
         // Act
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var actualDelay = CurrentPriceOperations.CalculateDelayUntilNextQuarter(currentTimeUtc);
 
-        // Assert - Timer should be configured to fire at the next quarter boundary
-        Assert.True(fakeTimer.IsStarted);
-        var expectedDelay = TimeSpan.FromMinutes(expectedMinutes).Add(TimeSpan.FromSeconds(expectedSeconds));
-        Assert.Equal(expectedDelay, fakeTimer.Delay);
+        // Assert - Delay should be calculated correctly for the next quarter boundary
+        Assert.Equal(expectedDelay, actualDelay);
     }
 
     [Fact]
@@ -107,14 +111,13 @@ public class CurrentPriceTests
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        var fakeDelayer = new FakeTaskDelayer();
         Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), 14:15 = 1 * 1000 + 14 * 100 + 15 = 2415
         var expectedPrice = 2415m;
 
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var viewModel = new CurrentPriceViewModel(repository, fakeDelayer, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -123,6 +126,8 @@ public class CurrentPriceTests
         // Assert
         Assert.NotNull(actualPrice);
         Assert.Equal(expectedPrice, actualPrice.PriceDkk);
+
+        viewModel.Dispose();
     }
 
     [Fact]
@@ -131,14 +136,13 @@ public class CurrentPriceTests
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        var fakeDelayer = new FakeTaskDelayer();
         Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), 14:30 = 1 * 1000 + 14 * 100 + 30 = 2430
         var expectedPrice = 2430m;
 
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var viewModel = new CurrentPriceViewModel(repository, fakeDelayer, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -147,6 +151,8 @@ public class CurrentPriceTests
         // Assert
         Assert.NotNull(actualPrice);
         Assert.Equal(expectedPrice, actualPrice.PriceDkk);
+
+        viewModel.Dispose();
     }
 
     [Fact]
@@ -156,12 +162,11 @@ public class CurrentPriceTests
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
 
         var repository = new InMemoryPriceRepository();
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        var fakeDelayer = new FakeTaskDelayer();
         Func<DateTime> getUtcNow = () => currentTimeUtc;
         // Don't store any prices
 
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var viewModel = new CurrentPriceViewModel(repository, fakeDelayer, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -169,6 +174,8 @@ public class CurrentPriceTests
 
         // Assert
         Assert.Null(actualPrice);
+
+        viewModel.Dispose();
     }
 
     [Theory]
@@ -187,14 +194,13 @@ public class CurrentPriceTests
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, currentHour, currentMinute, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
-        var fakeTimer = new FakePeriodicTimer();
-        Func<Infrastructure.Services.ITimer> timerFactory = () => fakeTimer;
+        var fakeDelayer = new FakeTaskDelayer();
         Func<DateTime> getUtcNow = () => currentTimeUtc;
 
         // Expected: Day 1 (today), expectedHour:expectedMinute
         var expectedPrice = 1 * 1000 + expectedHour * 100 + expectedMinute;
 
-        var viewModel = new CurrentPriceViewModel(repository, timerFactory, getUtcNow);
+        var viewModel = new CurrentPriceViewModel(repository, fakeDelayer, getUtcNow);
 
         // Act
         var prices = repository.GetPrices("DK1", currentTimeUtc.AddDays(-1), currentTimeUtc.AddDays(1));
@@ -203,5 +209,7 @@ public class CurrentPriceTests
         // Assert
         Assert.NotNull(actualPrice);
         Assert.Equal(expectedPrice, actualPrice.PriceDkk);
+
+        viewModel.Dispose();
     }
 }
