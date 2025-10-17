@@ -10,6 +10,7 @@ namespace Maui.Core.Features.PriceGraph
     {
         private readonly IPriceRepository _priceRepository;
         private readonly ITaskDelayer _taskDelayer;
+        private readonly Func<DateTime> _getNow;
         private readonly string _priceArea;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
         private Task? _nowUpdateTask;
@@ -21,7 +22,7 @@ namespace Maui.Core.Features.PriceGraph
         private DateTimePoint[] _chartData = [];
 
         [ObservableProperty]
-        private long _now = DateTime.Now.Ticks;
+        private long _now;
 
         [ObservableProperty]
         private string _timeRange = string.Empty;
@@ -33,16 +34,23 @@ namespace Maui.Core.Features.PriceGraph
                     : date.ToString("HH:mm");
             };
 
-        public PriceGraphViewModel(IPriceRepository priceRepository, ITaskDelayer taskDelayer)
+        public PriceGraphViewModel(
+            IPriceRepository priceRepository,
+            ITaskDelayer taskDelayer,
+            Func<DateTime>? getNow = null)
         {
             _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
             _taskDelayer = taskDelayer ?? throw new ArgumentNullException(nameof(taskDelayer));
+            _getNow = getNow ?? (() => DateTime.Now);
             _priceArea = "DK1"; // TODO: Make configurable
             _priceRepository.PricesUpdated += OnPricesUpdated;
 
+            // Initialize Now
+            _now = _getNow().Ticks;
+
             LoadPrices();
 
-            // Start the "Now" update loop (every 5 minutes)
+            // Start the "Now" update loop (every minute)
             _nowUpdateTask = RunNowUpdateLoopAsync(_cancellationTokenSource.Token);
         }
 
@@ -67,11 +75,11 @@ namespace Maui.Core.Features.PriceGraph
             {
                 try
                 {
-                    await _taskDelayer.DelayAsync(TimeSpan.FromMinutes(5), cancellationToken);
+                    await _taskDelayer.DelayAsync(TimeSpan.FromMinutes(1), cancellationToken);
 
                     if (!cancellationToken.IsCancellationRequested)
                     {
-                        Now = DateTime.Now.Ticks;
+                        Now = _getNow().Ticks;
                     }
                 }
                 catch (OperationCanceledException)

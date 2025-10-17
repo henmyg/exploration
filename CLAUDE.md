@@ -172,3 +172,4 @@ Architectural and technical decisions are documented in `Documentation/decisions
 - **Decision records** are a **historical trail** - capturing decisions made, overruled, or changed throughout the project lifecycle
 - Keep docs free of detailed reasoning. The "why" goes in decision records, which are never deleted or overwritten - only added to
 - This separation keeps documentation concise while maintaining a complete decision history
+- Use AcceptanceTests project for tests referenced in the docs/features
