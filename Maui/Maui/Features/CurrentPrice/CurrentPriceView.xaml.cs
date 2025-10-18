@@ -1,5 +1,3 @@
-using Maui.Core.Features.CurrentPrice;
-
 namespace Maui.Features.CurrentPrice;
 
 public partial class CurrentPriceView : ContentView

@@ -4,9 +4,8 @@ namespace Maui.Features;
 
 public partial class TodayPage : ContentPage
 {
-	public TodayPage(TodayPageModel todayPageModel)
+	public TodayPage()
 	{
 		InitializeComponent();
-		BindingContext = todayPageModel;
 	}
 }

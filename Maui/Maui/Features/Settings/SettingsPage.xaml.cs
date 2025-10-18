@@ -1,12 +1,9 @@
-using Maui.Core.Features.Settings;
-
 namespace Maui.Features.Settings;
 
 public partial class SettingsPage : ContentPage
 {
-	public SettingsPage(SettingsPageModel pageModel)
+	public SettingsPage()
 	{
 		InitializeComponent();
-		BindingContext = pageModel;
 	}
 }
