@@ -4,7 +4,7 @@ using Maui.Core.Features.SyncStatus;
 
 namespace Maui.Core.Features
 {
-    public class MainPageModel(
+    public class TodayPageModel(
         SyncStatusViewModel syncStatus,
         CurrentPriceViewModel currentPrice,
         PriceGraphViewModel priceGraph)

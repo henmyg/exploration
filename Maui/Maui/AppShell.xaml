@@ -4,11 +4,19 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:features="clr-namespace:Maui.Features"
-    xmlns:counter="clr-namespace:Maui.Features.Counter"
-    xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
+    xmlns:settings="clr-namespace:Maui.Features.Settings"
     Title="Maui">
 
-    <ShellContent
-        ContentTemplate="{DataTemplate features:MainPage}"/>
+    <TabBar>
+        <ShellContent
+            Title="Today"
+            Icon="home.png"
+            ContentTemplate="{DataTemplate features:TodayPage}" />
+
+        <ShellContent
+            Title="Settings"
+            Icon="settings.png"
+            ContentTemplate="{DataTemplate settings:SettingsPage}" />
+    </TabBar>
 
 </Shell>

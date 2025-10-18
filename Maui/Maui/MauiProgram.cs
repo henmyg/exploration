@@ -50,7 +50,8 @@ namespace Maui
             builder.Services.AddSingleton<SyncStatusViewModel>();
             builder.Services.AddSingleton<PriceGraphViewModel>();
 
-            builder.Services.AddSingleton<MainPageModel>();
+            // Register Page Models (Pages are auto-resolved by Shell via ActivatorUtilities)
+            builder.Services.AddSingleton<TodayPageModel>();
 
 #if DEBUG
     		builder.Logging.AddDebug();
