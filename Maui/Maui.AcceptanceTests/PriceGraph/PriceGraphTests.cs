@@ -119,13 +119,15 @@ public class PriceGraphTests
     {
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
+        var currentTimeLocal = currentTimeUtc.ToLocalTime();
         var repository = new InMemoryPriceRepository();
         var fakeDelayer = new FakeTaskDelayer();
+        Func<DateTime> getNow = () => currentTimeLocal;
 
         var todayStart = currentTimeUtc.Date;
 
         // Create ViewModel with empty repository
-        var viewModel = new PriceGraphViewModel(repository, fakeDelayer);
+        var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
 
         // Initially, ChartData should be empty
         Assert.Empty(viewModel.ChartData);

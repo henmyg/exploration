@@ -13,7 +13,7 @@ namespace Maui.Core.Features.PriceGraph
         private readonly Func<DateTime> _getNow;
         private readonly string _priceArea;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
-        private Task? _nowUpdateTask;
+        private readonly Task? _nowUpdateTask;
 
         [ObservableProperty]
         private ObservableCollection<PricePoint> _prices = [];
@@ -61,7 +61,7 @@ namespace Maui.Core.Features.PriceGraph
 
         private void LoadPrices()
         {
-            var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange();
+            var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(_getNow());
             var priceRecords = _priceRepository.GetPrices(_priceArea, startUtc, endUtc);
 
             Prices = priceRecords.ToPricePoints();
@@ -111,10 +111,9 @@ namespace Maui.Core.Features.PriceGraph
         /// <summary>
         /// Gets the UTC date range for today and tomorrow (midnight to midnight)
         /// </summary>
-        public static (DateTime startUtc, DateTime endUtc) GetTodayAndTomorrowRange()
+        public static (DateTime startUtc, DateTime endUtc) GetTodayAndTomorrowRange(DateTime now)
         {
-            var nowLocal = DateTime.Now;
-            var startOfTodayLocal = nowLocal.Date;
+            var startOfTodayLocal = now.Date;
             var endOfTomorrowLocal = startOfTodayLocal.AddDays(2);
 
             var startUtc = startOfTodayLocal.ToUniversalTime();
@@ -126,7 +125,7 @@ namespace Maui.Core.Features.PriceGraph
         /// <summary>
         /// Converts price records to observable collection of price points for display
         /// </summary>
-        public static ObservableCollection<PricePoint> ToPricePoints(this IEnumerable<Maui.Core.Shared.Models.PriceRecord> priceRecords)
+        public static ObservableCollection<PricePoint> ToPricePoints(this IEnumerable<Shared.Models.PriceRecord> priceRecords)
         {
             return new ObservableCollection<PricePoint>(
                 priceRecords
