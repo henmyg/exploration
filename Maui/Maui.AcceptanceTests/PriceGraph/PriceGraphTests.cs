@@ -122,7 +122,7 @@ public class PriceGraphTests
         var currentTimeLocal = currentTimeUtc.ToLocalTime();
         var repository = new InMemoryPriceRepository();
         var fakeDelayer = new FakeTaskDelayer();
-        Func<DateTime> getNow = () => currentTimeLocal;
+        DateTime getNow() => currentTimeLocal;
 
         var todayStart = currentTimeUtc.Date;
 
@@ -155,7 +155,7 @@ public class PriceGraphTests
         var currentTime = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Local);
         var repository = CreatePopulatedRepository(currentTime.ToUniversalTime());
         var fakeDelayer = new FakeTaskDelayer();
-        Func<DateTime> getNow = () => currentTime;
+        DateTime getNow() => currentTime;
 
         // Act - Create ViewModel which sets Now property
         var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
@@ -179,7 +179,7 @@ public class PriceGraphTests
         var currentTime = initialTime;
         var repository = CreatePopulatedRepository(initialTime.ToUniversalTime());
         var fakeDelayer = new FakeTaskDelayer();
-        Func<DateTime> getNow = () => currentTime;
+        DateTime getNow() => currentTime;
 
         // Act - Create ViewModel
         var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
