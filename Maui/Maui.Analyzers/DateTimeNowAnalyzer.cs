@@ -60,7 +60,9 @@ namespace Maui.Analyzers
             //    Pattern: getNow ?? (() => DateTime.Now)
             // 2. Inside null-coalescing expressions for optional parameters
             //    Pattern: now ?? DateTime.UtcNow
-            if (IsAcceptableDefaultValuePattern(memberAccess))
+            // 3. Inside DI registration lambdas
+            //    Pattern: builder.Services.AddSingleton<Func<DateTime>>(sp => () => DateTime.UtcNow)
+            if (IsAcceptableDefaultValuePattern(memberAccess) || IsInsideDIRegistration(memberAccess))
                 return;
 
             var diagnostic = Diagnostic.Create(
@@ -106,6 +108,44 @@ namespace Maui.Analyzers
             if (hasNearbyCoalesce)
             {
                 return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if DateTime.Now/UtcNow/Today is used inside a DI registration lambda.
+        /// Acceptable patterns:
+        /// builder.Services.AddSingleton<Func<DateTime>>(sp => () => DateTime.UtcNow)
+        /// builder.Services.AddTransient<ITimeProvider>(_ => new TimeProvider(() => DateTime.Now))
+        /// </summary>
+        private static bool IsInsideDIRegistration(MemberAccessExpressionSyntax memberAccess)
+        {
+            // Check if we're inside a lambda expression
+            var lambdaExpression = memberAccess.Ancestors()
+                .OfType<LambdaExpressionSyntax>()
+                .FirstOrDefault();
+
+            if (lambdaExpression == null)
+                return false;
+
+            // Check if this lambda is an argument to a method call
+            var invocation = lambdaExpression.Ancestors()
+                .OfType<InvocationExpressionSyntax>()
+                .FirstOrDefault();
+
+            if (invocation == null)
+                return false;
+
+            // Check if the method is a DI registration method (AddSingleton, AddTransient, AddScoped)
+            var memberAccessExpression = invocation.Expression as MemberAccessExpressionSyntax;
+            if (memberAccessExpression != null)
+            {
+                var methodName = memberAccessExpression.Name.Identifier.Text;
+                if (methodName == "AddSingleton" || methodName == "AddTransient" || methodName == "AddScoped")
+                {
+                    return true;
+                }
             }
 
             return false;
