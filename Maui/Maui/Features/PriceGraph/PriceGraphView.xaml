@@ -2,10 +2,13 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:locator="clr-namespace:Maui.Features"
              xmlns:vm="clr-namespace:Maui.Core.Features.PriceGraph;assembly=Maui.Core"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.Maui;assembly=LiveChartsCore.SkiaSharpView.Maui"
-             x:Class="Maui.Features.PriceGraph.PriceGraphView"
-             x:DataType="vm:PriceGraphViewModel">
+             x:Class="Maui.Features.PriceGraph.PriceGraphView">
+    <ContentView.BindingContext>
+        <locator:Locator ViewModelType="{x:Type vm:PriceGraphViewModel}" />
+    </ContentView.BindingContext>
     <VerticalStackLayout Padding="10">
         <Label
             Text="{Binding TimeRange}"

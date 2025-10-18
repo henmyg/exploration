@@ -4,7 +4,6 @@
              xmlns:vm="clr-namespace:Maui.Core.Features.Settings.Configuration;assembly=Maui.Core"
              xmlns:priceArea="clr-namespace:Maui.Features.Settings.Configuration.PriceArea"
              x:Class="Maui.Features.ConfigurationPage"
-             x:DataType="vm:ConfigurationViewModel"
              Title="ConfigurationPage">
     <VerticalStackLayout>
         <priceArea:PriceAreaView />

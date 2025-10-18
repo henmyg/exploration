@@ -56,10 +56,6 @@ namespace Maui
             builder.Services.AddSingleton<SettingsViewModel>();
             builder.Services.AddSingleton<PriceAreaViewModel>();
 
-            // Register Page Models (Pages are auto-resolved by Shell via ActivatorUtilities)
-            builder.Services.AddSingleton<TodayPageModel>();
-            builder.Services.AddSingleton<SettingsPageModel>();
-
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif

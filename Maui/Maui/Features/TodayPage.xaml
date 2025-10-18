@@ -6,11 +6,10 @@
              xmlns:currentPrice="clr-namespace:Maui.Features.CurrentPrice"
              xmlns:priceGraph="clr-namespace:Maui.Features.PriceGraph"
              x:Class="Maui.Features.TodayPage"
-             x:DataType="features:TodayPageModel"
              Title="Today">
     <VerticalStackLayout>
-        <syncStatus:SyncStatusView BindingContext="{Binding SyncStatus}" />
-        <currentPrice:CurrentPriceView BindingContext="{Binding CurrentPrice}"/>
-        <priceGraph:PriceGraphView BindingContext="{Binding PriceGraph}"/>
+        <syncStatus:SyncStatusView />
+        <currentPrice:CurrentPriceView />
+        <priceGraph:PriceGraphView />
     </VerticalStackLayout>
 </ContentPage>
