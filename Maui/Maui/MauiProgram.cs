@@ -3,9 +3,12 @@ using LiveChartsCore.SkiaSharpView.Maui;
 using Maui.Core.Features;
 using Maui.Core.Features.CurrentPrice;
 using Maui.Core.Features.PriceGraph;
+using Maui.Core.Features.Settings;
+using Maui.Core.Features.Settings.Configuration;
 using Maui.Core.Features.SyncStatus;
 using Maui.Core.Shared.Repositories;
 using Maui.Core.Shared.Services;
+using Maui.Features;
 using Maui.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using SkiaSharp.Views.Maui.Controls.Hosting;
@@ -30,6 +33,7 @@ namespace Maui
 
             // Register Shell
             builder.Services.AddSingleton<AppShell>();
+            builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
 
             // Register HttpClient
             builder.Services.AddSingleton<HttpClient>();
@@ -49,15 +53,26 @@ namespace Maui
             builder.Services.AddSingleton<CurrentPriceViewModel>();
             builder.Services.AddSingleton<SyncStatusViewModel>();
             builder.Services.AddSingleton<PriceGraphViewModel>();
+            builder.Services.AddSingleton<SettingsViewModel>();
+            builder.Services.AddSingleton<PriceAreaViewModel>();
 
             // Register Page Models (Pages are auto-resolved by Shell via ActivatorUtilities)
             builder.Services.AddSingleton<TodayPageModel>();
+            builder.Services.AddSingleton<SettingsPageModel>();
 
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            // Register routes
+            Routing.RegisterRoute("settings/configuration", typeof(ConfigurationPage));
+
+            var app = builder.Build();
+
+            // Give access to services from anywhere
+            ServiceLocator.Services = app.Services;
+            
+            return app;
         }
     }
 }

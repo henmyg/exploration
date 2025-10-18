@@ -9,11 +9,13 @@
 
     <TabBar>
         <ShellContent
+            Route="Today"
             Title="Today"
             Icon="home.png"
             ContentTemplate="{DataTemplate features:TodayPage}" />
 
         <ShellContent
+            Route="Settings"
             Title="Settings"
             Icon="settings.png"
             ContentTemplate="{DataTemplate settings:SettingsPage}" />
