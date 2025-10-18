@@ -16,10 +16,11 @@ public interface IPriceSyncService: INotifyPropertyChanged
 /// <summary>
 /// Service responsible for syncing price data from the API to the price repository.
 /// </summary>
-public partial class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository): ObservableObject, IPriceSyncService
+public partial class PriceSyncService(HttpClient httpClient, IPriceRepository priceRepository, Func<DateTime>? getNow = null): ObservableObject, IPriceSyncService
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private readonly IPriceRepository _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
+    private readonly Func<DateTime> _getNow = getNow ?? (() => DateTime.Now);
 
     [ObservableProperty]
     private bool _isSynching;
@@ -67,7 +68,7 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
     /// </summary>
     public async Task SyncCurrentAndUpcomingPricesAsync(string priceArea, CancellationToken cancellationToken = default)
     {
-        var now = DateTime.Now;
+        var now = _getNow();
         var startDate = now.Date;
         var endDate = startDate.AddDays(2); // Today and tomorrow
 
