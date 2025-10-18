@@ -9,13 +9,14 @@ public class PriceGraphOperationsTests
     [Fact]
     public void GetTodayAndTomorrowRange_ReturnsRangeStartingAtMidnightToday()
     {
-        // Arrange
-        var nowLocal = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Local);
+        // Arrange - Use UTC time as input
+        var nowUtc = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Utc);
 
         // Act
-        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowLocal);
+        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowUtc);
 
-        // Assert
+        // Assert - Result should be midnight today to midnight day after tomorrow (in local time, converted to UTC)
+        var nowLocal = nowUtc.ToLocalTime();
         var expectedStartLocal = nowLocal.Date;
         var expectedEndLocal = expectedStartLocal.AddDays(2);
 
@@ -26,11 +27,11 @@ public class PriceGraphOperationsTests
     [Fact]
     public void GetTodayAndTomorrowRange_Returns48HourRange()
     {
-        // Arrange
-        var nowLocal = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Local);
+        // Arrange - Use UTC time as input
+        var nowUtc = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Utc);
 
         // Act
-        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowLocal);
+        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowUtc);
 
         // Assert
         var duration = endUtc - startUtc;
@@ -56,7 +57,7 @@ public class PriceGraphOperationsTests
     }
 
     [Fact]
-    public void ToPricePoints_ConvertsTimesToLocal()
+    public void ToPricePoints_KeepsTimesInUtc()
     {
         // Arrange
         var utcTime = new DateTime(2025, 10, 15, 12, 0, 0, DateTimeKind.Utc);
@@ -68,9 +69,10 @@ public class PriceGraphOperationsTests
         // Act
         var result = priceRecords.ToPricePoints();
 
-        // Assert
+        // Assert - Times should remain in UTC, conversion happens in formatter
         Assert.Single(result);
-        Assert.Equal(utcTime.ToLocalTime(), result[0].Time);
+        Assert.Equal(utcTime, result[0].Time);
+        Assert.Equal(DateTimeKind.Utc, result[0].Time.Kind);
     }
 
     [Fact]

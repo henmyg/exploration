@@ -10,7 +10,7 @@ namespace Maui.Core.Features.PriceGraph
     {
         private readonly IPriceRepository _priceRepository;
         private readonly ITaskDelayer _taskDelayer;
-        private readonly Func<DateTime> _getNow;
+        private readonly Func<DateTime> _getNowUtc;
         private readonly string _priceArea;
         private readonly CancellationTokenSource _cancellationTokenSource = new();
         private readonly Task? _nowUpdateTask;
@@ -28,7 +28,8 @@ namespace Maui.Core.Features.PriceGraph
         private string _timeRange = string.Empty;
 
         public Func<DateTime, string> XAxisFormatter { get; } =
-            date => {
+            dateUtc => {
+                var date = dateUtc.ToLocalTime();
                 return date.TimeOfDay == TimeSpan.Zero
                     ? date.ToString("dd/MM HH:mm")
                     : date.ToString("HH:mm");
@@ -37,16 +38,16 @@ namespace Maui.Core.Features.PriceGraph
         public PriceGraphViewModel(
             IPriceRepository priceRepository,
             ITaskDelayer taskDelayer,
-            Func<DateTime>? getNow = null)
+            Func<DateTime>? getNowUtc = null)
         {
             _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
             _taskDelayer = taskDelayer ?? throw new ArgumentNullException(nameof(taskDelayer));
-            _getNow = getNow ?? (() => DateTime.Now);
+            _getNowUtc = getNowUtc ?? (() => DateTime.UtcNow);
             _priceArea = "DK1"; // TODO: Make configurable
             _priceRepository.PricesUpdated += OnPricesUpdated;
 
             // Initialize Now
-            _now = _getNow().Ticks;
+            _now = _getNowUtc().Ticks;
 
             LoadPrices();
 
@@ -61,7 +62,7 @@ namespace Maui.Core.Features.PriceGraph
 
         private void LoadPrices()
         {
-            var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(_getNow());
+            var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(_getNowUtc());
             var priceRecords = _priceRepository.GetPrices(_priceArea, startUtc, endUtc);
 
             Prices = priceRecords.ToPricePoints();
@@ -79,7 +80,7 @@ namespace Maui.Core.Features.PriceGraph
 
                     if (!cancellationToken.IsCancellationRequested)
                     {
-                        Now = _getNow().Ticks;
+                        Now = _getNowUtc().Ticks;
                     }
                 }
                 catch (OperationCanceledException)
@@ -110,13 +111,18 @@ namespace Maui.Core.Features.PriceGraph
     internal static class PriceGraphOperations
     {
         /// <summary>
-        /// Gets the UTC date range for today and tomorrow (midnight to midnight)
+        /// Gets the UTC date range for today and tomorrow (midnight to midnight in local time, converted to UTC)
         /// </summary>
-        public static (DateTime startUtc, DateTime endUtc) GetTodayAndTomorrowRange(DateTime now)
+        /// <param name="nowUtc">Current UTC time</param>
+        /// <returns>Start and end times in UTC representing midnight-to-midnight in local timezone</returns>
+        public static (DateTime startUtc, DateTime endUtc) GetTodayAndTomorrowRange(DateTime nowUtc)
         {
-            var startOfTodayLocal = now.Date;
+            // Convert to local to determine "today" in user's timezone
+            var nowLocal = nowUtc.ToLocalTime();
+            var startOfTodayLocal = nowLocal.Date;
             var endOfTomorrowLocal = startOfTodayLocal.AddDays(2);
 
+            // Convert back to UTC for database queries
             var startUtc = startOfTodayLocal.ToUniversalTime();
             var endUtc = endOfTomorrowLocal.ToUniversalTime();
 
@@ -132,7 +138,7 @@ namespace Maui.Core.Features.PriceGraph
                 priceRecords
                     .Where(p => p.PriceDkk.HasValue)
                     .Select(p => new PricePoint(
-                        p.TimeUtc.ToLocalTime(),
+                        p.TimeUtc,
                         p.PriceDkk!.Value))
                     .OrderBy(p => p.Time)
             );
@@ -148,7 +154,7 @@ namespace Maui.Core.Features.PriceGraph
                 .OrderBy(p => p.TimeUtc)
                 .Select(p => new DateTimePoint
                 {
-                    DateTime = p.TimeUtc.ToLocalTime(),
+                    DateTime = p.TimeUtc,
                     Value = (double)p.PriceDkk!.Value
                 })];
         }

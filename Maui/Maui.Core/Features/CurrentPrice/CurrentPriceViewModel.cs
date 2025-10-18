@@ -131,11 +131,13 @@ public static class CurrentPriceOperations
     /// <summary>
     /// Gets the current price from price records.
     /// </summary>
+    /// <param name="records">Price records to search</param>
+    /// <param name="nowUtc">Current UTC time (optional, defaults to DateTime.UtcNow)</param>
     public static PriceRecord? GetCurrentPrice(
         this IEnumerable<PriceRecord> records,
-        DateTime? now = null
+        DateTime? nowUtc = null
     ) => records
-        .Where(r => r.TimeUtc <= (now ?? DateTime.UtcNow))
+        .Where(r => r.TimeUtc <= (nowUtc ?? DateTime.UtcNow))
         .OrderByDescending(r => r.TimeUtc)
         .FirstOrDefault();
 }

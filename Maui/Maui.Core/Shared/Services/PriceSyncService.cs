@@ -20,7 +20,7 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private readonly IPriceRepository _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
-    private readonly Func<DateTime> _getNow = getNow ?? (() => DateTime.Now);
+    private readonly Func<DateTime> _getNow = getNow ?? (() => DateTime.UtcNow);
 
     [ObservableProperty]
     private bool _isSynching;
@@ -68,8 +68,10 @@ public partial class PriceSyncService(HttpClient httpClient, IPriceRepository pr
     /// </summary>
     public async Task SyncCurrentAndUpcomingPricesAsync(string priceArea, CancellationToken cancellationToken = default)
     {
-        var now = _getNow();
-        var startDate = now.Date;
+        var nowUtc = _getNow();
+        // Convert to local to determine "today" in user's timezone
+        var nowLocal = nowUtc.ToLocalTime();
+        var startDate = nowLocal.Date;
         var endDate = startDate.AddDays(2); // Today and tomorrow
 
         await SyncPricesAsync(priceArea, startDate, endDate, cancellationToken);
