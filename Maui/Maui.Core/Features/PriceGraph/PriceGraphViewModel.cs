@@ -95,6 +95,7 @@ namespace Maui.Core.Features.PriceGraph
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
             _priceRepository.PricesUpdated -= OnPricesUpdated;
+            GC.SuppressFinalize(this);
         }
     }
 
