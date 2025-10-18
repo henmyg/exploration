@@ -7,6 +7,7 @@ Decision should be recorded and put in the decisions folder. Decisions should al
 - [Vertical Slice Architecture with Parallel Folders](vertical-slice-architecture.md) - Feature organization across layers maintaining cohesion and discoverability
 - [ContentView Over ContentPage for Features](contentview-over-contentpage.md) - UI component pattern for better composability and reusability
 - [Separation of Stateful Services/ViewModels and Pure Function Libraries](pure-function-operations.md) - Pattern for organizing business logic to maximize testability and maintainability
+- [Injectable Time Provider Pattern](injectable-time-provider.md) - Using dependency injection for testable time-dependent code with Roslyn analyzer enforcement
 
 
 ## Template
