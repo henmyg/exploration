@@ -9,11 +9,13 @@ public class PriceGraphOperationsTests
     [Fact]
     public void GetTodayAndTomorrowRange_ReturnsRangeStartingAtMidnightToday()
     {
+        // Arrange
+        var nowLocal = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Local);
+
         // Act
-        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange();
+        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowLocal);
 
         // Assert
-        var nowLocal = DateTime.Now;
         var expectedStartLocal = nowLocal.Date;
         var expectedEndLocal = expectedStartLocal.AddDays(2);
 
@@ -24,8 +26,11 @@ public class PriceGraphOperationsTests
     [Fact]
     public void GetTodayAndTomorrowRange_Returns48HourRange()
     {
+        // Arrange
+        var nowLocal = new DateTime(2025, 10, 17, 14, 30, 0, DateTimeKind.Local);
+
         // Act
-        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange();
+        var (startUtc, endUtc) = PriceGraphOperations.GetTodayAndTomorrowRange(nowLocal);
 
         // Assert
         var duration = endUtc - startUtc;
