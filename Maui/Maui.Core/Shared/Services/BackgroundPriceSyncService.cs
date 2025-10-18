@@ -26,7 +26,7 @@ public class BackgroundPriceSyncService : IHostedService, IDisposable
         _syncService = syncService ?? throw new ArgumentNullException(nameof(syncService));
         _taskDelayer = taskDelayer ?? throw new ArgumentNullException(nameof(taskDelayer));
         _priceRepository = priceRepository ?? throw new ArgumentNullException(nameof(priceRepository));
-        _getNow = getNow ?? (() => DateTime.Now);
+        _getNow = getNow ?? (() => DateTime.UtcNow);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

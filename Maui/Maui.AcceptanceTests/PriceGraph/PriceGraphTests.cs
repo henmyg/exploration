@@ -57,28 +57,30 @@ public class PriceGraphTests
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
         var fakeDelayer = new FakeTaskDelayer();
+        DateTime getNow() => currentTimeUtc;
 
         // Act - Create ViewModel which loads prices from repository
-        var viewModel = new PriceGraphViewModel(repository, fakeDelayer);
+        var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
 
         // Assert - ChartData should have all prices from today (96 quarters) and tomorrow (96 quarters)
         Assert.Equal(192, viewModel.ChartData.Length);
 
         // Verify first and last prices span two days (today and tomorrow)
-        var firstTime = viewModel.ChartData[0].DateTime;
-        var lastTime = viewModel.ChartData[^1].DateTime;
+        var firstTimeUtc = viewModel.ChartData[0].DateTime;
+        var lastTimeUtc = viewModel.ChartData[^1].DateTime;
 
         // Should span from 00:00 today to 23:45 tomorrow (approximately 48 hours minus 15 minutes)
-        var timeSpan = lastTime - firstTime;
+        var timeSpan = lastTimeUtc - firstTimeUtc;
         Assert.Equal(TimeSpan.FromHours(47).Add(TimeSpan.FromMinutes(45)), timeSpan);
 
-        // Verify first price is at midnight (00:00)
-        Assert.Equal(0, firstTime.Hour);
-        Assert.Equal(0, firstTime.Minute);
+        // Convert to local to verify it's at local midnight and 23:45
+        var firstTimeLocal = firstTimeUtc.ToLocalTime();
+        var lastTimeLocal = lastTimeUtc.ToLocalTime();
 
-        // Verify last price is at 23:45
-        Assert.Equal(23, lastTime.Hour);
-        Assert.Equal(45, lastTime.Minute);
+        Assert.Equal(0, firstTimeLocal.Hour);
+        Assert.Equal(0, firstTimeLocal.Minute);
+        Assert.Equal(23, lastTimeLocal.Hour);
+        Assert.Equal(45, lastTimeLocal.Minute);
 
         viewModel.Dispose();
     }
@@ -90,9 +92,10 @@ public class PriceGraphTests
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
         var repository = CreatePopulatedRepository(currentTimeUtc);
         var fakeDelayer = new FakeTaskDelayer();
+        DateTime getNow() => currentTimeUtc;
 
         // Act - Create ViewModel which loads prices
-        var viewModel = new PriceGraphViewModel(repository, fakeDelayer);
+        var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
 
         // Assert - ChartData should have data for today and tomorrow (192 total)
         Assert.Equal(192, viewModel.ChartData.Length);
@@ -119,10 +122,9 @@ public class PriceGraphTests
     {
         // Arrange
         var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
-        var currentTimeLocal = currentTimeUtc.ToLocalTime();
         var repository = new InMemoryPriceRepository();
         var fakeDelayer = new FakeTaskDelayer();
-        DateTime getNow() => currentTimeLocal;
+        DateTime getNow() => currentTimeUtc;
 
         var todayStart = currentTimeUtc.Date;
 
@@ -152,16 +154,16 @@ public class PriceGraphTests
     public void PriceGraph_ShowsNowMarker()
     {
         // Arrange
-        var currentTime = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Local);
-        var repository = CreatePopulatedRepository(currentTime.ToUniversalTime());
+        var currentTimeUtc = new DateTime(2025, 10, 17, 14, 17, 0, DateTimeKind.Utc);
+        var repository = CreatePopulatedRepository(currentTimeUtc);
         var fakeDelayer = new FakeTaskDelayer();
-        DateTime getNow() => currentTime;
+        DateTime getNow() => currentTimeUtc;
 
         // Act - Create ViewModel which sets Now property
         var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
 
-        // Assert - Now property should be set to the current time
-        Assert.Equal(currentTime.Ticks, viewModel.Now);
+        // Assert - Now property should be set to the current time (in UTC ticks)
+        Assert.Equal(currentTimeUtc.Ticks, viewModel.Now);
 
         viewModel.Dispose();
     }
@@ -175,17 +177,17 @@ public class PriceGraphTests
     public async Task PriceGraph_NowMarkerPosition_UpdatesEveryMinute(int hour, int minute)
     {
         // Arrange
-        var initialTime = new DateTime(2025, 10, 17, hour, minute, 0, DateTimeKind.Local);
-        var currentTime = initialTime;
-        var repository = CreatePopulatedRepository(initialTime.ToUniversalTime());
+        var initialTimeUtc = new DateTime(2025, 10, 17, hour, minute, 0, DateTimeKind.Utc);
+        var currentTime = initialTimeUtc;
+        var repository = CreatePopulatedRepository(initialTimeUtc);
         var fakeDelayer = new FakeTaskDelayer();
         DateTime getNow() => currentTime;
 
         // Act - Create ViewModel
         var viewModel = new PriceGraphViewModel(repository, fakeDelayer, getNow);
 
-        // Initial Now should be set to initialTime
-        Assert.Equal(initialTime.Ticks, viewModel.Now);
+        // Initial Now should be set to initialTime (UTC ticks)
+        Assert.Equal(initialTimeUtc.Ticks, viewModel.Now);
 
         // Wait for the delay task to be initiated (1 minute update loop)
         await Task.Delay(50);
@@ -195,11 +197,11 @@ public class PriceGraphTests
         Assert.Equal(TimeSpan.FromMinutes(1), fakeDelayer.RequestedDelay);
 
         // Simulate 1 minute passing - update time
-        currentTime = initialTime.AddMinutes(1);
+        currentTime = initialTimeUtc.AddMinutes(1);
         fakeDelayer.CompleteDelay();
         await Task.Delay(50); // Give update time to process
 
-        // Now property should have been updated to the new time
+        // Now property should have been updated to the new time (UTC ticks)
         Assert.Equal(currentTime.Ticks, viewModel.Now);
 
         viewModel.Dispose();
