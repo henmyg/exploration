@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Maui.Features.Debug.ViewStates.SyncStatus.SyncStatusStatesPage"
-             xmlns:syncStatusView="clr-namespace:Maui.Features.SyncStatus"
-             xmlns:locator="clr-namespace:Maui.Features"
-             xmlns:vm="clr-namespace:Maui.Core.Features.Debug;assembly=Maui.Core"
-             xmlns:syncStatusVm="clr-namespace:Maui.Core.Features.SyncStatus;assembly=Maui.Core"
+             x:Class="Maui.Features.Debug.ViewStates.PriceGraphStatesPage"
+             xmlns:features="clr-namespace:Maui.Features"
              xmlns:viewStates="clr-namespace:Maui.Features.Debug.ViewStates"
-             x:DataType="vm:MockSyncStatusViewModel"
-             Title="SyncStatus States">
+             xmlns:priceGraph="clr-namespace:Maui.Features.PriceGraph"
+             xmlns:vm="clr-namespace:Maui.Core.Features.Debug;assembly=Maui.Core"
+             Title="PriceGraphStatesPage">
     <ContentPage.BindingContext>
-        <locator:Locator ViewModelType="{x:Type vm:MockSyncStatusViewModel}" />
+        <features:Locator ViewModelType="{x:Type vm:PriceGraphStatesViewModel}" />
     </ContentPage.BindingContext>
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -23,7 +21,7 @@
         <VerticalStackLayout Spacing="20" Padding="20">
             <ContentView
                 ControlTemplate="{StaticResource PreviewView}">
-                <syncStatusView:SyncStatusView BindingContext="{Binding}" />
+                <priceGraph:PriceGraphView BindingContext="{Binding}" />
             </ContentView>
         </VerticalStackLayout>
     </ScrollView>

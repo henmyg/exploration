@@ -3,6 +3,7 @@ using LiveChartsCore.Defaults;
 using Maui.Core.Shared.Repositories;
 using Maui.Infrastructure.Services;
 using System.Collections.ObjectModel;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Maui.Core.Features.PriceGraph
 {
@@ -27,13 +28,7 @@ namespace Maui.Core.Features.PriceGraph
         [ObservableProperty]
         private string _timeRange = string.Empty;
 
-        public Func<DateTime, string> XAxisFormatter { get; } =
-            dateUtc => {
-                var date = dateUtc.ToLocalTime();
-                return date.TimeOfDay == TimeSpan.Zero
-                    ? date.ToString("dd/MM HH:mm")
-                    : date.ToString("HH:mm");
-            };
+        public Func<DateTime, string> XAxisFormatter { get; } = PriceGraphOperations.XAxisFormatter;
 
         public PriceGraphViewModel(
             IPriceRepository priceRepository,
@@ -167,6 +162,13 @@ namespace Maui.Core.Features.PriceGraph
             var startLocal = startUtc.ToLocalTime();
             var endLocal = endUtc.ToLocalTime();
             return $"{startLocal:dd/MM HH:mm} - {endLocal:dd/MM HH:mm}";
+        }
+
+        public static string XAxisFormatter(DateTime dateUtc) {
+            var date = dateUtc.ToLocalTime();
+            return date.TimeOfDay == TimeSpan.Zero
+                ? date.ToString("dd/MM HH:mm")
+                : date.ToString("HH:mm");
         }
     }
 }

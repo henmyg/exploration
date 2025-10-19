@@ -7,3 +7,9 @@ public interface IPreviewView<TState> where TState : Enum
 }
 
 public record ViewStateOption<TEnum>(string Title, TEnum Value) where TEnum : Enum;
+
+public enum DesignState
+{
+    None
+}
+public interface IDesignPreviewView : IPreviewView<DesignState> { }
