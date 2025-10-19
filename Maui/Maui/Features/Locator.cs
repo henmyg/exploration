@@ -17,7 +17,9 @@
                 throw new InvalidOperationException("ViewModelType must be set.");
 
             // Resolve the ViewModel from MAUI DI container
-            return ServiceLocator.Services.GetRequiredService(ViewModelType);
+            return ViewModelType.IsInterface
+                ? ServiceLocator.Services.GetRequiredService(ViewModelType)
+                : ActivatorUtilities.GetServiceOrCreateInstance(ServiceLocator.Services, ViewModelType);
         }
     }
 }

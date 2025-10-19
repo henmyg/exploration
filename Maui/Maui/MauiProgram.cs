@@ -58,11 +58,6 @@ namespace Maui
             builder.Services.AddSingleton<IPriceAreaViewModel, PriceAreaViewModel>();
 
 #if DEBUG
-            // Register Debug ViewModels
-            builder.Services.AddSingleton<MockSyncStatusViewModel>();
-#endif
-
-#if DEBUG
     		builder.Logging.AddDebug();
 #endif
 
