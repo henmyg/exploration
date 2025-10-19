@@ -66,9 +66,10 @@ Maui.Core/Features/MyFeature/
 
 - **ViewModels**: In Maui.Core, use `[ObservableProperty]` and `[RelayCommand]`
 - **Views**: In Maui, **prefer ContentView over ContentPage** for features (better composability)
-  - XAML with data bindings, code-behind sets `BindingContext`
+  - XAML with data bindings
+  - ViewModels injected via ServiceLocator pattern in XAML
   - ContentPages compose multiple ContentViews together
-- **DI**: Register in `MauiProgram.cs`, constructor injection throughout
+- **DI**: Register in `MauiProgram.cs`, constructor injection for services/ViewModels
 
 ### Static Operations Classes
 
@@ -110,9 +111,17 @@ internal static class MyServiceOperations
 
 2. **Create ContentViews** in `Maui/Features/MyFeature/`:
    - `MyFeatureView.xaml` (**use ContentView, not ContentPage**)
+   - Inject ViewModel using ServiceLocator pattern in XAML
    - `MyFeatureView.xaml.cs` (**minimal code-behind** - parameterless constructor only)
    ```xml
-   <ContentView xmlns="..." x:Class="..." x:DataType="...ViewModel">
+   <ContentView xmlns="..."
+                xmlns:locator="clr-namespace:Maui.Features"
+                xmlns:vm="clr-namespace:Maui.Core.Features.MyFeature;assembly=Maui.Core"
+                x:Class="..."
+                x:DataType="vm:MyFeatureViewModel">
+       <ContentView.BindingContext>
+           <locator:Locator ViewModelType="{x:Type vm:MyFeatureViewModel}" />
+       </ContentView.BindingContext>
        <!-- Feature UI -->
    </ContentView>
    ```
@@ -126,31 +135,21 @@ internal static class MyServiceOperations
    }
    ```
 
-3. **Compose into pages**:
-   - Parent page sets `BindingContext` for child views
-   - Views remain composable and reusable
-   ```xml
-   <!-- MainPage.xaml -->
-   <ContentPage>
-       <myFeature:MyFeatureView BindingContext="{Binding MyFeature}" />
-   </ContentPage>
-   ```
-
-4. **Register in `MauiProgram.cs`**:
+3. **Register in `MauiProgram.cs`**:
    ```csharp
    builder.Services.AddSingleton<MyFeatureViewModel>();
-   builder.Services.AddTransient<MyFeatureView>(); // Transient for views
    ```
+   Note: Views don't need registration - they resolve ViewModels via ServiceLocator
 
 ## Key Conventions
 
 - **Dependency flow**: Maui → Maui.Core → Maui.Infrastructure (never reverse)
 - **ContentView over ContentPage**: Features are ContentViews, composed into ContentPages
-- **BindingContext responsibility**: Parent pages set BindingContext for child views (views don't set their own)
-- **View constructors**: Parameterless only - no ViewModel injection in view constructors
+- **ViewModel injection**: Use ServiceLocator pattern in XAML (not constructor injection in views)
+- **View constructors**: Parameterless only - ViewModel resolved via XAML markup extension
 - **Event-driven updates**: Repositories raise events, ViewModels subscribe
 - **Extension methods**: Prefer fluent API style for operations
-- **DI lifetimes**: Singletons for services/repos/ViewModels, transient for views
+- **DI lifetimes**: Singletons for services/repos/ViewModels (views not registered)
 - **Testing**: Unit tests for Core/Infrastructure, integration tests for API
 
 ## CI/CD

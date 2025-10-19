@@ -107,11 +107,12 @@ Features are implemented as `ContentView` components, not `ContentPage`:
 - **Feature Views**: Each feature is a `ContentView` (e.g., `CurrentPriceView.xaml`, `SyncStatusView.xaml`)
   - Self-contained, reusable UI component
   - Data bindings to its own ViewModel
+  - ViewModel injected via ServiceLocator pattern in XAML
   - Can be composed into pages or other views
 
 - **Page Composition**: Main pages compose multiple ContentViews together
   - Example: `MainPage.xaml` contains `SyncStatusView` and `CurrentPriceView`
-  - Each view receives its ViewModel via `BindingContext`
+  - Each view resolves its own ViewModel using the Locator markup extension
 
 ## Project Structure
 
@@ -236,7 +237,8 @@ Maui.Core/Features/CurrentPrice/
   - Event-driven: Subscribes to repository events, raises events for UI
 - **View**: XAML ContentViews in Maui with data bindings
   - **Prefer ContentView over ContentPage** for features (better composability)
-  - Minimal code-behind: Sets BindingContext, wires up events
+  - Minimal code-behind: Parameterless constructor only
+  - ViewModel injection via ServiceLocator pattern in XAML
   - Handles platform-specific code (accessibility, etc.)
   - ContentPages compose multiple ContentViews together
 
@@ -246,22 +248,39 @@ Maui.Core/Features/CurrentPrice/
 3. ViewModel calls `OnPropertyChanged()` to notify UI
 4. XAML bindings automatically update
 
+**ServiceLocator Pattern:**
+Views inject their ViewModels using a XAML markup extension:
+```xml
+<!-- MyFeatureView.xaml (ContentView) -->
+<ContentView xmlns:locator="clr-namespace:Maui.Features"
+             xmlns:vm="clr-namespace:Maui.Core.Features.MyFeature;assembly=Maui.Core"
+             x:DataType="vm:MyFeatureViewModel">
+    <ContentView.BindingContext>
+        <locator:Locator ViewModelType="{x:Type vm:MyFeatureViewModel}" />
+    </ContentView.BindingContext>
+    <!-- UI content -->
+</ContentView>
+```
+
 **View Composition Pattern:**
 ```xml
 <!-- MainPage.xaml (ContentPage) -->
 <ContentPage>
     <VerticalStackLayout>
-        <syncStatus:SyncStatusView BindingContext="{Binding SyncStatus}" />
-        <currentPrice:CurrentPriceView BindingContext="{Binding CurrentPrice}"/>
+        <syncStatus:SyncStatusView />
+        <currentPrice:CurrentPriceView />
     </VerticalStackLayout>
 </ContentPage>
 ```
+Note: Each view resolves its own ViewModel, no parent BindingContext needed
 
 ### Dependency Injection
 - Configured in `MauiProgram.cs`
-- Services registered: HttpClient, Repositories, Services, ViewModels, Pages
-- Constructor injection throughout the app
-- Lifetime management: Singletons for repositories/services, transient for pages
+- Services registered: HttpClient, Repositories, Services, ViewModels
+- Constructor injection for services and ViewModels
+- Views use ServiceLocator pattern (not registered in DI)
+- Lifetime management: Singletons for repositories/services/ViewModels
+- ServiceLocator initialized in `MauiProgram.cs` after app build
 
 ### Extension Methods
 - API Client implemented as extension method on HttpClient
