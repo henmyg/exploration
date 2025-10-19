@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Maui.Features.Debug.ViewStates.SyncStatus.SyncStatusStatesPage"
+             Title="SyncStatus States">
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20">
+            <Label
+                Text="SyncStatus View States"
+                FontSize="24"
+                FontAttributes="Bold" />
+
+            <Label
+                Text="This page will display different states of the SyncStatus view"
+                FontSize="14"
+                TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <!-- Placeholder for now -->
+            <Label
+                Text="States will be added here"
+                FontSize="16"
+                HorizontalOptions="Center"
+                Margin="0,40,0,0" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

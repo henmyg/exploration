@@ -63,6 +63,12 @@ namespace Maui
             // Register routes
             Routing.RegisterRoute("settings/configuration", typeof(ConfigurationPage));
 
+#if DEBUG
+            // Debug routes
+            Routing.RegisterRoute("debug/viewstates", typeof(Features.Debug.ViewStates.ViewStatesPage));
+            Routing.RegisterRoute("debug/viewstates/syncstatus", typeof(Features.Debug.ViewStates.SyncStatus.SyncStatusStatesPage));
+#endif
+
             var app = builder.Build();
 
             // Give access to services from anywhere
