@@ -10,9 +10,13 @@ namespace Maui.Core.Features.Debug
         [ObservableProperty]
         private ICommand _goToSyncStatusCommand;
 
+        [ObservableProperty]
+        private ICommand _goToPriceGraphCommand;
+
         public ViewStatesPageModel(INavigationService navigationService)
         {
             _goToSyncStatusCommand = new RelayCommand(async () => await navigationService.GoToAsync("debug/viewstates/syncstatus"));
+            _goToPriceGraphCommand = new RelayCommand(async () => await navigationService.GoToAsync("debug/viewstates/pricegraph"));
         }
     }
 }

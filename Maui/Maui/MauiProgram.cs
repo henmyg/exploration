@@ -68,6 +68,7 @@ namespace Maui
             // Debug routes
             Routing.RegisterRoute("debug/viewstates", typeof(Features.Debug.ViewStates.ViewStatesPage));
             Routing.RegisterRoute("debug/viewstates/syncstatus", typeof(Features.Debug.ViewStates.SyncStatus.SyncStatusStatesPage));
+            Routing.RegisterRoute("debug/viewstates/pricegraph", typeof(Features.Debug.ViewStates.PriceGraphStatesPage));
 #endif
 
             var app = builder.Build();

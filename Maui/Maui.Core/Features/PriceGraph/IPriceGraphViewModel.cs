@@ -10,11 +10,6 @@ namespace Maui.Core.Features.PriceGraph;
 public interface IPriceGraphViewModel : INotifyPropertyChanged, IDisposable
 {
     /// <summary>
-    /// Collection of price points for display
-    /// </summary>
-    ObservableCollection<PricePoint> Prices { get; }
-
-    /// <summary>
     /// Chart data points in format required by LiveCharts
     /// </summary>
     DateTimePoint[] ChartData { get; }

@@ -5,53 +5,53 @@
     xmlns:vm="clr-namespace:Maui.Core.Features.Debug;assembly=Maui.Core"                
     x:Class="Maui.Features.Debug.ViewStates.PreviewTemplate">
     <ControlTemplate x:Key="PreviewView">
-        <VerticalStackLayout
-            BindingContext="{TemplateBinding BindingContext}"
-            x:DataType="vm:IPreviewView">
-            <Label
-                 Text="SyncStatus View States"
-                 FontSize="24"
-                 FontAttributes="Bold" />
+        <ContentView BindingContext="{TemplateBinding BindingContext}">
+            <VerticalStackLayout>
+                <Label
+                     Text="SyncStatus View States"
+                     FontSize="24"
+                     FontAttributes="Bold" />
 
-            <Label
-                 Text="Use the radio buttons to switch between states and see transitions"
-                 FontSize="14"
-                 TextColor="Gray" />
+                <Label
+                     Text="Use the radio buttons to switch between states and see transitions"
+                     FontSize="14"
+                     TextColor="Gray" />
 
-            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+                <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
 
-            <!-- State Selector -->
-            <Label Text="Select State:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,5" />
+                <!-- State Selector -->
+                <Label Text="Select State:" FontSize="16" FontAttributes="Bold" Margin="0,10,0,5" />
 
-            <HorizontalStackLayout
-                Spacing="20"
-                HorizontalOptions="Center"
-                RadioButtonGroup.GroupName="StateSelector"
-                BindableLayout.ItemsSource="{Binding States}"
-                RadioButtonGroup.SelectedValue="{Binding ViewState}">
+                <HorizontalStackLayout
+                    Spacing="20"
+                    HorizontalOptions="Center"
+                    RadioButtonGroup.GroupName="StateSelector"
+                    BindableLayout.ItemsSource="{Binding States}"
+                    RadioButtonGroup.SelectedValue="{Binding ViewState}">
 
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate>
-                        <RadioButton
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton
                             Content="{Binding Title}"
                             Value="{Binding Value}" />
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
 
-            </HorizontalStackLayout>
+                </HorizontalStackLayout>
 
-            <BoxView HeightRequest="1" Color="LightGray" Margin="0,20" />
+                <BoxView HeightRequest="1" Color="LightGray" Margin="0,20" />
 
-            <!-- Preview -->
-            <Label Text="Preview:" FontSize="16" FontAttributes="Bold" Margin="0,0,0,10" />
+                <!-- Preview -->
+                <Label Text="Preview:" FontSize="16" FontAttributes="Bold" Margin="0,0,0,10" />
 
-            <Border StrokeThickness="2"
+                <Border StrokeThickness="2"
                 Stroke="LightGray"
                 Padding="20"
                 BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2E2E2E}">
-                <ContentPresenter/>
-            </Border>
+                    <ContentPresenter/>
+                </Border>
 
-        </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ContentView>
     </ControlTemplate>
 </ResourceDictionary>

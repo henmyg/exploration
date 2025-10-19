@@ -25,8 +25,13 @@
             <!-- List of available view states -->
             <VerticalStackLayout Spacing="10">
                 <Button
-                    Text="SyncStatus States"
+                    Text="SyncStatus"
                     Command="{Binding GoToSyncStatusCommand}"
+                    BackgroundColor="{StaticResource Primary}"
+                    TextColor="White" />
+                <Button
+                    Text="PriceGraph"
+                    Command="{Binding GoToPriceGraphCommand}"
                     BackgroundColor="{StaticResource Primary}"
                     TextColor="White" />
             </VerticalStackLayout>
