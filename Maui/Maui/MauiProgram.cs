@@ -2,6 +2,7 @@
 using LiveChartsCore.SkiaSharpView.Maui;
 using Maui.Core.Features;
 using Maui.Core.Features.CurrentPrice;
+using Maui.Core.Features.Debug;
 using Maui.Core.Features.PriceGraph;
 using Maui.Core.Features.Settings;
 using Maui.Core.Features.Settings.Configuration;
@@ -55,6 +56,11 @@ namespace Maui
             builder.Services.AddSingleton<IPriceGraphViewModel, PriceGraphViewModel>();
             builder.Services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
             builder.Services.AddSingleton<IPriceAreaViewModel, PriceAreaViewModel>();
+
+#if DEBUG
+            // Register Debug ViewModels
+            builder.Services.AddSingleton<MockSyncStatusViewModel>();
+#endif
 
 #if DEBUG
     		builder.Logging.AddDebug();

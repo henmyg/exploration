@@ -1,3 +1,5 @@
+using Maui.Core.Features.Debug;
+
 namespace Maui.Features.Debug.ViewStates.SyncStatus;
 
 public partial class SyncStatusStatesPage : ContentPage
