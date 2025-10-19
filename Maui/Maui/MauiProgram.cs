@@ -49,12 +49,12 @@ namespace Maui
             // Register Background Services
             builder.Services.AddSingleton<BackgroundPriceSyncService>();
 
-            // Register Features
-            builder.Services.AddSingleton<CurrentPriceViewModel>();
-            builder.Services.AddSingleton<SyncStatusViewModel>();
-            builder.Services.AddSingleton<PriceGraphViewModel>();
-            builder.Services.AddSingleton<SettingsViewModel>();
-            builder.Services.AddSingleton<PriceAreaViewModel>();
+            // Register Features (by interface for testability and flexibility)
+            builder.Services.AddSingleton<ICurrentPriceViewModel, CurrentPriceViewModel>();
+            builder.Services.AddSingleton<ISyncStatusViewModel, SyncStatusViewModel>();
+            builder.Services.AddSingleton<IPriceGraphViewModel, PriceGraphViewModel>();
+            builder.Services.AddSingleton<ISettingsViewModel, SettingsViewModel>();
+            builder.Services.AddSingleton<IPriceAreaViewModel, PriceAreaViewModel>();
 
 #if DEBUG
     		builder.Logging.AddDebug();

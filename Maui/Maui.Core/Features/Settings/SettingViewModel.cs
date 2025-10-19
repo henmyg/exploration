@@ -4,7 +4,7 @@ using Maui.Core.Shared.Services;
 
 namespace Maui.Core.Features.Settings
 {
-    public partial class SettingsViewModel: ObservableObject
+    public partial class SettingsViewModel : ObservableObject, ISettingsViewModel
     {
         private readonly INavigationService _navigation;
 

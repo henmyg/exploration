@@ -6,7 +6,7 @@ using System.Collections.ObjectModel;
 
 namespace Maui.Core.Features.PriceGraph
 {
-    public partial class PriceGraphViewModel : ObservableObject, IDisposable
+    public partial class PriceGraphViewModel : ObservableObject, IPriceGraphViewModel
     {
         private readonly IPriceRepository _priceRepository;
         private readonly ITaskDelayer _taskDelayer;

@@ -4,9 +4,10 @@
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:locator="clr-namespace:Maui.Features"
              xmlns:vm="clr-namespace:Maui.Core.Features.SyncStatus;assembly=Maui.Core"
-             x:Class="Maui.Features.SyncStatus.SyncStatusView">
+             x:Class="Maui.Features.SyncStatus.SyncStatusView"
+             x:DataType="vm:ISyncStatusViewModel">
     <ContentView.BindingContext>
-        <locator:Locator ViewModelType="{x:Type vm:SyncStatusViewModel}" />
+        <locator:Locator ViewModelType="{x:Type vm:ISyncStatusViewModel}" />
     </ContentView.BindingContext>
     <VerticalStackLayout>
         <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">

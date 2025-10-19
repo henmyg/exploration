@@ -5,7 +5,7 @@ using Maui.Infrastructure.Services;
 
 namespace Maui.Core.Features.CurrentPrice;
 
-public partial class CurrentPriceViewModel : ObservableObject, IDisposable
+public partial class CurrentPriceViewModel : ObservableObject, ICurrentPriceViewModel
 {
     private readonly IPriceRepository _priceRepository;
     private readonly ITaskDelayer _taskDelayer;

@@ -2,7 +2,7 @@
 
 namespace Maui.Core.Features.Settings.Configuration
 {
-    public partial class ConfigurationViewModel: ObservableObject
+    public partial class ConfigurationViewModel : ObservableObject, IConfigurationViewModel
     {
     }
 }
