@@ -6,6 +6,7 @@ Decision should be recorded and put in the decisions folder. Decisions should al
 - [Three-Layer Project Architecture for Cross-Platform CI/CD](three-layer-architecture.md) - Project structure enabling fast, cost-effective Linux-based testing
 - [Vertical Slice Architecture with Parallel Folders](vertical-slice-architecture.md) - Feature organization across layers maintaining cohesion and discoverability
 - [ContentView Over ContentPage for Features](contentview-over-contentpage.md) - UI component pattern for better composability and reusability
+- [ServiceLocator Pattern for ViewModel Injection](service-locator-for-viewmodel-injection.md) - Using ServiceLocator to inject ViewModels into ContentViews for feature portability and independence
 - [Separation of Stateful Services/ViewModels and Pure Function Libraries](pure-function-operations.md) - Pattern for organizing business logic to maximize testability and maintainability
 - [Injectable Time Provider Pattern](injectable-time-provider.md) - Using dependency injection for testable time-dependent code with Roslyn analyzer enforcement
 - [Injectable Task Delayer Pattern](injectable-task-delayer.md) - Abstracting async delays for fast, deterministic tests without waiting for real time

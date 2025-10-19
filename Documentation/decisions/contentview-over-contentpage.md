@@ -19,8 +19,13 @@ We've chosen to implement features as **ContentView components** rather than Con
 ```xml
 <!-- Feature as ContentView -->
 <ContentView xmlns="..."
+             xmlns:locator="clr-namespace:Maui.Features"
+             xmlns:vm="clr-namespace:Maui.Core.Features.CurrentPrice;assembly=Maui.Core"
              x:Class="Maui.Features.CurrentPrice.CurrentPriceView"
              x:DataType="vm:CurrentPriceViewModel">
+    <ContentView.BindingContext>
+        <locator:Locator ViewModelType="{x:Type vm:CurrentPriceViewModel}" />
+    </ContentView.BindingContext>
     <VerticalStackLayout>
         <!-- Feature UI -->
     </VerticalStackLayout>
@@ -29,11 +34,13 @@ We've chosen to implement features as **ContentView components** rather than Con
 <!-- Composed into Page -->
 <ContentPage xmlns="..." x:Class="Maui.MainPage">
     <VerticalStackLayout>
-        <syncStatus:SyncStatusView BindingContext="{Binding SyncStatus}" />
-        <currentPrice:CurrentPriceView BindingContext="{Binding CurrentPrice}"/>
+        <syncStatus:SyncStatusView />
+        <currentPrice:CurrentPriceView />
     </VerticalStackLayout>
 </ContentPage>
 ```
+
+**Note:** See [ServiceLocator Pattern for ViewModel Injection](service-locator-for-viewmodel-injection.md) for details on how ViewModels are injected into ContentViews.
 
 # Solution Proposals
 
@@ -74,10 +81,10 @@ Implement features as ContentView components that are composed into ContentPages
 - Features don't need navigation awareness
 
 **Cons:**
-- Need to manually manage BindingContext
 - ContentPages required for composition
 - Slightly more initial setup
 - Must be disciplined about feature boundaries
+- ViewModel injection requires ServiceLocator pattern (see related decision)
 
 ## 3. Features as UserControl (Legacy Pattern)
 
