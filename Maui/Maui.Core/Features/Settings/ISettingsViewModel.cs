@@ -14,7 +14,17 @@ public interface ISettingsViewModel : INotifyPropertyChanged
     string Title { get; }
 
     /// <summary>
+    /// Whether to show the debug section
+    /// </summary>
+    bool ShowDebugSection { get; }
+
+    /// <summary>
     /// Command to navigate to configuration page
     /// </summary>
     IAsyncRelayCommand GoToConfigurationCommand { get; }
+
+    /// <summary>
+    /// Command to navigate to view states page (only available when ShowDebugSection is true)
+    /// </summary>
+    IAsyncRelayCommand? GoToViewStatesCommand { get; }
 }
