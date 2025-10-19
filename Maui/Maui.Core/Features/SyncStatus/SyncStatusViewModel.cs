@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace Maui.Core.Features.SyncStatus
 {
-    public partial class SyncStatusViewModel: ObservableObject
+    public partial class SyncStatusViewModel : ObservableObject, ISyncStatusViewModel
     {
         private readonly IPriceSyncService _priceSyncService;
 
